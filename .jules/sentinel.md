@@ -41,3 +41,8 @@
 **Vulnerability:** The application was missing strict length validation on user inputs (username, password) before hitting the database or expensive hashing algorithms. Extremely long inputs could trigger unhandled database `DataError` exceptions or lead to Denial of Service (DoS) attacks via CPU exhaustion when hashing overly long passwords.
 **Learning:** Application-layer boundary checking is crucial. Database schema constraints (like `VARCHAR(80)`) will cause fatal errors if breached, and algorithms like bcrypt scale non-linearly with input length.
 **Prevention:** Always enforce explicit length constraints (e.g. using `Length(max=...)` validators in WTForms and `len() > max_len` checks in API routes) for usernames, passwords, and text fields to prevent DoS and DB crashes.
+
+## 2026-07-29 - [Fix] Inadequate Password Length Validation for bcrypt
+**Vulnerability:** The application was allowing passwords longer than 72 bytes, which would be silently truncated by bcrypt, leading to weakened security because variations of passwords after 72 bytes would evaluate as correct during authentication.
+**Learning:** Bcrypt has a maximum limit of 72 bytes. Input longer than this is quietly truncated rather than throwing an error, meaning long, seemingly secure passwords can become weakened if an attacker knows only the first 72 bytes.
+**Prevention:** Always ensure that any password input that will be hashed by bcrypt is restricted to a maximum length of 72 characters prior to hashing. Implement this at the validation layer in both WTForms and API JSON body validation.

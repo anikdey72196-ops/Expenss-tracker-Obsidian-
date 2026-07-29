@@ -175,11 +175,11 @@ def test_register_oversized_payloads(client):
     # Test oversized password
     response = client.post("/register", data={
         "username": "validuser",
-        "password": "a" * 129,
+        "password": "a" * 73,
         "submit": "Sign Up"
     })
     assert response.status_code == 200
-    assert b"Password must be between 8 and 128 characters." in response.data
+    assert b"Password must be between 8 and 72 characters." in response.data
 
 def test_api_signup_oversized_payloads():
     import os
@@ -202,15 +202,15 @@ def test_api_signup_oversized_payloads():
             "password": "validpassword"
         })
         assert response.status_code == 400
-        assert response.get_json()["error"] == "Username must be between 3 and 80 characters."
+        assert response.get_json()["error"] == "Username must be a string not exceeding 80 characters"
 
         # Test oversized password in API
         response = api_client.post("/auth/signup", json={
             "username": "validuser",
-            "password": "a" * 129
+            "password": "a" * 73
         })
         assert response.status_code == 400
-        assert response.get_json()["error"] == "Password must be between 8 and 128 characters."
+        assert response.get_json()["error"] == "Password must be a string not exceeding 72 characters"
 
     with api_app.app_context():
         db.drop_all()
