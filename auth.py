@@ -13,27 +13,23 @@ def signup():
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({"error": "Username and password are required"}), 400
 
-    if not isinstance(data['username'], str) or len(data['username']) > 80:
-        return jsonify({"error": "Username must be a string not exceeding 80 characters"}), 400
+    username = data.get('username')
+    password = data.get('password')
 
-    if not isinstance(data['password'], str) or len(data['password']) > 100:
-        return jsonify({"error": "Password must be a string not exceeding 100 characters"}), 400
-    if len(data.get('username')) > 80 or len(data.get('password')) > 72:
-        return jsonify({"error": "Username must be <= 80 characters and password <= 72 characters"}), 400
-    username = data.get('username', '')
-    password = data.get('password', '')
+    if not isinstance(username, str) or not isinstance(password, str):
+        return jsonify({"error": "Username and password must be strings"}), 400
 
     if len(username) < 3 or len(username) > 80:
         return jsonify({"error": "Username must be between 3 and 80 characters."}), 400
 
-    if len(password) < 8 or len(password) > 128:
-        return jsonify({"error": "Password must be between 8 and 128 characters."}), 400
+    if len(password) < 8 or len(password) > 72:
+        return jsonify({"error": "Password must be between 8 and 72 characters."}), 400
     
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 400
         
-    hashed_password = generate_password_hash(data['password'])
-    new_user = User(username=data['username'], password_hash=hashed_password)
+    hashed_password = generate_password_hash(password)
+    new_user = User(username=username, password_hash=hashed_password)
     
     db.session.add(new_user)
     db.session.commit()
@@ -48,13 +44,18 @@ def login():
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({"error": "Username and password are required"}), 400
         
-    if not isinstance(data['username'], str) or not isinstance(data['password'], str) or len(data['username']) > 80 or len(data['password']) > 100:
-    if len(data.get('username')) > 80 or len(data.get('password')) > 72:
+    username = data.get('username')
+    password = data.get('password')
+
+    if not isinstance(username, str) or not isinstance(password, str):
         return jsonify({"error": "Invalid username or password"}), 401
 
-    user = User.query.filter_by(username=data['username']).first()
+    if len(username) > 80 or len(password) > 72:
+        return jsonify({"error": "Invalid username or password"}), 401
+
+    user = User.query.filter_by(username=username).first()
     
-    if not user or not check_password_hash(user.password_hash, data['password']):
+    if not user or not check_password_hash(user.password_hash, password):
         return jsonify({"error": "Invalid username or password"}), 401
         
     # Generate token using user ID

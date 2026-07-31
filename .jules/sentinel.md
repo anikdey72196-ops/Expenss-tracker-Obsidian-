@@ -41,3 +41,9 @@
 **Vulnerability:** The application was missing strict length validation on user inputs (username, password) before hitting the database or expensive hashing algorithms. Extremely long inputs could trigger unhandled database `DataError` exceptions or lead to Denial of Service (DoS) attacks via CPU exhaustion when hashing overly long passwords.
 **Learning:** Application-layer boundary checking is crucial. Database schema constraints (like `VARCHAR(80)`) will cause fatal errors if breached, and algorithms like bcrypt scale non-linearly with input length.
 **Prevention:** Always enforce explicit length constraints (e.g. using `Length(max=...)` validators in WTForms and `len() > max_len` checks in API routes) for usernames, passwords, and text fields to prevent DoS and DB crashes.
+
+## 2026-07-19 - Missing Content-Security-Policy (CSP) headers
+
+**Vulnerability:** The application was missing Content-Security-Policy (CSP) headers, exposing a potential Defense-in-Depth gap where any template injection or input handling bug could result in full Cross-Site Scripting (XSS). Additionally, the application lacked `Cache-Control` restrictions, potentially allowing browsers to cache sensitive dashboard data.
+**Learning:** Adding CSP headers is a critical Defense-in-Depth measure against XSS. Even if an XSS vulnerability exists, a strict CSP restricts an attacker's ability to load malicious scripts or exfiltrate data.
+**Prevention:** Always implement CSP headers via middleware (e.g., `@app.after_request` in Flask), restricting `script-src`, `style-src`, and other directives to trusted origins (`self` and specific CDNs). Also, ensure `Cache-Control: no-store` is applied to prevent caching of authenticated user data.
