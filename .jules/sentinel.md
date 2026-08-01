@@ -41,3 +41,8 @@
 **Vulnerability:** The application was missing strict length validation on user inputs (username, password) before hitting the database or expensive hashing algorithms. Extremely long inputs could trigger unhandled database `DataError` exceptions or lead to Denial of Service (DoS) attacks via CPU exhaustion when hashing overly long passwords.
 **Learning:** Application-layer boundary checking is crucial. Database schema constraints (like `VARCHAR(80)`) will cause fatal errors if breached, and algorithms like bcrypt scale non-linearly with input length.
 **Prevention:** Always enforce explicit length constraints (e.g. using `Length(max=...)` validators in WTForms and `len() > max_len` checks in API routes) for usernames, passwords, and text fields to prevent DoS and DB crashes.
+
+## 2026-07-20 - [Fix] Broken Syntax in Authentication and Boundary Verification
+**Vulnerability:** The `auth.py` had syntax errors preventing the authentication flow from functioning and boundary checks weren't adequately structured or enforced to a secure maximum of 72 characters.
+**Learning:** Secure boundaries require valid syntax and uniform max-length restrictions across the API and frontend forms to prevent bypasses and unhandled exceptions.
+**Prevention:** Ensure strict validation limits (e.g. 72 characters for bcrypt compatibility) are correctly syntax checked and enforced on all authentication endpoints.
