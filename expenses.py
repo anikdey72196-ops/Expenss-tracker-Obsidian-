@@ -35,13 +35,17 @@ def add_expense():
             raise ValueError
     except (ValueError, TypeError):
         return jsonify({"error": "Amount must be a valid number"}), 400
-        
+
+    description = data.get('description', '')
+    if not isinstance(description, str) or len(description) > 255:
+        return jsonify({"error": "Description must be a string not exceeding 255 characters"}), 400
+
     new_expense = Expense(
         user_id=current_user_id,
         amount=amount,
         category=data['category'],
         date=expense_date,
-        description=data.get('description', '')
+        description=description
     )
     
     db.session.add(new_expense)
@@ -124,6 +128,8 @@ def update_expense(expense_id):
             return jsonify({"error": "Date must be in YYYY-MM-DD format"}), 400
             
     if 'description' in data:
+        if not isinstance(data['description'], str) or len(data['description']) > 255:
+            return jsonify({"error": "Description must be a string not exceeding 255 characters"}), 400
         expense.description = data['description']
         
     db.session.commit()
