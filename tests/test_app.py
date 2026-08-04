@@ -179,7 +179,7 @@ def test_register_oversized_payloads(client):
         "submit": "Sign Up"
     })
     assert response.status_code == 200
-    assert b"Password must be between 8 and 128 characters." in response.data
+    assert b"Password must be between 8 and 72 characters." in response.data
 
 def test_api_signup_oversized_payloads():
     import os
@@ -210,7 +210,7 @@ def test_api_signup_oversized_payloads():
             "password": "a" * 129
         })
         assert response.status_code == 400
-        assert response.get_json()["error"] == "Password must be between 8 and 128 characters."
+        assert response.get_json()["error"] == "Password must be between 8 and 72 characters."
 
     with api_app.app_context():
         db.drop_all()

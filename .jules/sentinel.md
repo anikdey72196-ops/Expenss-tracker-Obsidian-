@@ -41,3 +41,8 @@
 **Vulnerability:** The application was missing strict length validation on user inputs (username, password) before hitting the database or expensive hashing algorithms. Extremely long inputs could trigger unhandled database `DataError` exceptions or lead to Denial of Service (DoS) attacks via CPU exhaustion when hashing overly long passwords.
 **Learning:** Application-layer boundary checking is crucial. Database schema constraints (like `VARCHAR(80)`) will cause fatal errors if breached, and algorithms like bcrypt scale non-linearly with input length.
 **Prevention:** Always enforce explicit length constraints (e.g. using `Length(max=...)` validators in WTForms and `len() > max_len` checks in API routes) for usernames, passwords, and text fields to prevent DoS and DB crashes.
+
+## 2024-08-04 - [Fix] Standardized Input Length Limits & Broken Checks
+**Vulnerability:** Input fields lacked standardized boundary limits (e.g., descriptions allowing unlimited length) and multiple validation paths had duplicated, conflicting logic (like checking `len > 128` on one line and `len > 72` in another line). This caused both DoS potential (excessive parsing/hashing) and 500 crashes (Null values in APIs or DataErrors).
+**Learning:** Security validations (like limiting description to 255 chars or passwords to 72 chars) must be applied uniformly across both UI (WTForms) and API logic. Validation logic must handle edge cases like `null` gracefully (e.g. `data.get('description') or ''`) to prevent 500 errors.
+**Prevention:** Unify validation logic, write clear test cases for edge limits, and ensure all text fields entering the database explicitly map to the schema limits.
