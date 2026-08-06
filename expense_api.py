@@ -1,12 +1,4 @@
-from flask import Flask
-from datetime import timedelta
-import os
-import urllib.parse
-from dotenv import load_dotenv
-
-load_dotenv()
-
-from extensions import db, jwt
+from imports import Flask, timedelta, os, urllib, load_dotenv, db, jwt
 from auth import auth_bp
 from expenses import expenses_bp
 

@@ -1,8 +1,8 @@
-from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token
-from models import User
-from extensions import db
+from imports import (
+    Blueprint, request, jsonify,
+    generate_password_hash, check_password_hash,
+    create_access_token, User, db
+)
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -27,12 +27,20 @@ def signup():
 
     if len(password) < 8:
         return jsonify({"error": "Password must be at least 8 characters."}), 400
+    username = data.get('username', '')
+    password = data.get('password', '')
+
+    if not isinstance(username, str) or len(username) < 3 or len(username) > 80:
+        return jsonify({"error": "Username must be between 3 and 80 characters."}), 400
+
+    if not isinstance(password, str) or len(password) < 8 or len(password) > 128:
+        return jsonify({"error": "Password must be between 8 and 128 characters."}), 400
     
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 400
         
-    hashed_password = generate_password_hash(data['password'])
-    new_user = User(username=data['username'], password_hash=hashed_password)
+    hashed_password = generate_password_hash(password)
+    new_user = User(username=username, password_hash=hashed_password)
     
     db.session.add(new_user)
     db.session.commit()
@@ -48,6 +56,7 @@ def login():
         return jsonify({"error": "Username and password are required"}), 400
         
     if not isinstance(data['username'], str) or not isinstance(data['password'], str) or len(data['username']) > 80 or len(data['password']) > 72:
+    if not isinstance(data['username'], str) or not isinstance(data['password'], str) or len(data['username']) > 80 or len(data['password']) > 128:
         return jsonify({"error": "Invalid username or password"}), 401
 
     user = User.query.filter_by(username=data['username']).first()

@@ -1,18 +1,9 @@
-import os
-import math
-import datetime
-import urllib.parse
-from dotenv import load_dotenv
-load_dotenv()
-
-from flask import Flask, render_template, redirect, session, request, url_for, flash
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_wtf.csrf import CSRFProtect
-from sqlalchemy.pool import NullPool
-from form import RegistrationForm, LoginForm
-from extensions import db
-from models import User, Expense
-import ssl
+from imports import (
+    os, math, datetime, urllib, ssl, load_dotenv, NullPool,
+    Flask, render_template, redirect, session, request, url_for, flash,
+    generate_password_hash, check_password_hash, CSRFProtect,
+    db, User, Expense, RegistrationForm, LoginForm
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))

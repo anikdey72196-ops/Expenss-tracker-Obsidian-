@@ -2,8 +2,7 @@ import os
 os.environ['PYTEST_CURRENT_TEST'] = 'true'
 import pytest
 from app import app as flask_app
-from extensions import db
-from models import User, Expense
+from imports import db, User, Expense
 
 @pytest.fixture
 def client():
@@ -149,7 +148,7 @@ def test_edit_delete_expense_authenticated(client):
 
     # Check if updated in DB
     with flask_app.app_context():
-        updated_expense = Expense.query.get(expense_id)
+        updated_expense = db.session.get(Expense, expense_id)
         assert updated_expense.amount == 200.0
 
     # Delete expense
@@ -159,7 +158,7 @@ def test_edit_delete_expense_authenticated(client):
 
     # Check if deleted in DB
     with flask_app.app_context():
-        deleted_expense = Expense.query.get(expense_id)
+        deleted_expense = db.session.get(Expense, expense_id)
         assert deleted_expense is None
 
 def test_register_oversized_payloads(client):
