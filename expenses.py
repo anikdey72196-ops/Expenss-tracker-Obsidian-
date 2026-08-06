@@ -1,21 +1,19 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-import math
-from datetime import datetime, timedelta, date
-from models import Expense
-from extensions import db
+from imports import (
+    Blueprint, request, jsonify, jwt_required, get_jwt_identity,
+    math, datetime, timedelta, date, Expense, db
+)
 
 expenses_bp = Blueprint('expenses', __name__, url_prefix='/expenses')
 
 VALID_CATEGORIES = [
-    'Groceries', 'Leisure', 'Electronics', 'Utilities', 'Investment',
-    'Clothing', 'Health', 'Others'
+    'Food & Dining', 'Transport', 'Shopping', 'Utilities', 'Health',
+    'Entertainment', 'Education', 'Software', 'Personal Care', 'Investment', 'Other'
 ]
 
 @expenses_bp.route('', methods=['POST'])
 @jwt_required()
 def add_expense():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     data = request.get_json()
     
     if not data or not data.get('amount') or not data.get('category') or not data.get('date'):
@@ -25,7 +23,7 @@ def add_expense():
         return jsonify({"error": f"Category must be one of: {', '.join(VALID_CATEGORIES)}"}), 400
         
     try:
-        expense_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        expense_date = datetime.datetime.strptime(data['date'], '%Y-%m-%d').date()
     except ValueError:
         return jsonify({"error": "Date must be in YYYY-MM-DD format"}), 400
         
@@ -36,12 +34,16 @@ def add_expense():
     except (ValueError, TypeError):
         return jsonify({"error": "Amount must be a valid number"}), 400
         
+    description = data.get('description', '')
+    if description and len(description) > 255:
+        return jsonify({"error": "Description cannot exceed 255 characters"}), 400
+
     new_expense = Expense(
         user_id=current_user_id,
         amount=amount,
         category=data['category'],
         date=expense_date,
-        description=data.get('description', '')
+        description=description
     )
     
     db.session.add(new_expense)
@@ -53,7 +55,7 @@ def add_expense():
 @jwt_required()
 def get_expenses():
     """List and filter past expenses."""
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     filter_type = request.args.get('filter')
     
     query = Expense.query.filter_by(user_id=current_user_id)
@@ -79,8 +81,8 @@ def get_expenses():
             return jsonify({"error": "start_date and end_date are required for custom filter"}), 400
             
         try:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
             query = query.filter(Expense.date >= start_date, Expense.date <= end_date)
         except ValueError:
             return jsonify({"error": "Dates must be in YYYY-MM-DD format"}), 400
@@ -93,7 +95,7 @@ def get_expenses():
 @jwt_required()
 def update_expense(expense_id):
     """Update existing expense."""
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     expense = Expense.query.filter_by(id=expense_id, user_id=current_user_id).first()
     
     if not expense:
@@ -119,12 +121,15 @@ def update_expense(expense_id):
         
     if 'date' in data:
         try:
-            expense.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            expense.date = datetime.datetime.strptime(data['date'], '%Y-%m-%d').date()
         except ValueError:
             return jsonify({"error": "Date must be in YYYY-MM-DD format"}), 400
             
     if 'description' in data:
-        expense.description = data['description']
+        description_val = data.get('description') or ''
+        if len(description_val) > 255:
+            return jsonify({"error": "Description cannot exceed 255 characters"}), 400
+        expense.description = description_val
         
     db.session.commit()
     return jsonify(expense.to_dict()), 200
@@ -133,7 +138,7 @@ def update_expense(expense_id):
 @jwt_required()
 def delete_expense(expense_id):
     """Remove existing expenses."""
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     expense = Expense.query.filter_by(id=expense_id, user_id=current_user_id).first()
     
     if not expense:
