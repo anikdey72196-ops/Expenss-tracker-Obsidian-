@@ -29,3 +29,5 @@ instance/
 node_modules/
 
 .env
+*.db
+assistant.db

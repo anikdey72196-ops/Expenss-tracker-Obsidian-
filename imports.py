@@ -4,6 +4,8 @@ import ssl
 import urllib.parse
 import datetime
 from datetime import timedelta, date
+import json 
+import requests
 
 from dotenv import load_dotenv
 load_dotenv()

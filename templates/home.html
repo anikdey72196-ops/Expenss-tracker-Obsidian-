@@ -208,6 +208,51 @@
 </div>
 </div>
 </div>
+
+<!-- AI Insights Card -->
+<div class="bg-gradient-to-r from-violet-500/10 via-surface-container to-purple-500/10 border border-violet-500/20 rounded-xl p-6 w-full flex flex-col mb-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+        <div class="flex items-center space-x-3 md:w-1/4">
+            <span class="material-symbols-outlined text-primary text-3xl">auto_awesome</span>
+            <div>
+                <h3 class="text-xl font-bold tracking-tight text-zinc-50">AI Insights</h3>
+                <p class="text-xs text-zinc-400 mt-1">Powered by Ollama</p>
+            </div>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-8 md:w-2/4">
+            <div class="flex flex-col">
+                <span class="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-1.5">Predicted Month-End</span>
+                <span id="ai-predicted-total" class="text-xl font-bold tracking-tight text-zinc-50">₹--</span>
+            </div>
+            
+            <div class="flex flex-col">
+                <span class="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-1.5">Budget Status</span>
+                <div><span id="ai-budget-status" class="px-3 py-1 rounded-full text-xs font-bold bg-zinc-700/20 text-zinc-400">Loading</span></div>
+            </div>
+            
+            <div class="flex flex-col">
+                <span class="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-1.5">Trend</span>
+                <span id="ai-trend" class="text-sm font-medium text-zinc-300">→ Stable</span>
+            </div>
+        </div>
+        
+        <div class="md:w-1/4 flex justify-end">
+            <button id="ai-refresh-btn" class="px-4 py-2 border border-violet-500/30 text-violet-400 text-xs font-bold rounded hover:bg-violet-500/10 active:scale-95 transition-all">Refresh</button>
+        </div>
+    </div>
+    
+    <div class="pt-6 border-t border-violet-500/20">
+        <ul id="ai-tips-list" class="space-y-3 text-sm text-zinc-300">
+            <li class="flex items-start gap-2">
+                <span class="text-violet-400 mt-0.5">💡</span>
+                <span>Loading insights...</span>
+            </li>
+        </ul>
+        <p id="ai-summary" class="mt-4 text-xs text-zinc-500 italic"></p>
+    </div>
+</div>
+
 <!-- Trends & Summary -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 <!-- Spending Chart Simulation -->
@@ -323,6 +368,50 @@
 </div>
 </div>
 </main>
+<!-- AI Chat Widget -->
+<button id="ai-chat-toggle" class="fixed bottom-28 right-8 w-14 h-14 bg-zinc-900 border border-zinc-700 text-violet-400 rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 hover:text-primary hover:scale-110 active:scale-95 transition-all duration-300 z-40">
+    <span class="material-symbols-outlined text-2xl">smart_toy</span>
+</button>
+
+<div id="ai-chat-panel" class="fixed bottom-28 right-8 w-96 h-[500px] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col z-50 hidden transition-all duration-300">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50 rounded-t-2xl">
+        <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="font-bold text-sm text-zinc-50">Obsidian AI</span>
+        </div>
+        <button id="ai-chat-close" class="text-zinc-500 hover:text-zinc-300 transition-colors">
+            <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+    </div>
+    
+    <!-- Message Area -->
+    <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="flex justify-start mb-3">
+            <div class="bg-zinc-800 text-zinc-100 px-4 py-2 rounded-2xl rounded-bl-sm max-w-[80%] text-sm">
+                Hi! I'm Obsidian AI. How can I help you with your finances today?
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick-ask Buttons -->
+    <div class="px-4 py-2 flex gap-2 overflow-x-auto border-t border-zinc-800/50" style="scrollbar-width: none;">
+        <button class="ai-quick-ask px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-violet-400 hover:border-violet-500/30 transition-colors whitespace-nowrap">How can I save more?</button>
+        <button class="ai-quick-ask px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-violet-400 hover:border-violet-500/30 transition-colors whitespace-nowrap">Analyze my spending</button>
+        <button class="ai-quick-ask px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-violet-400 hover:border-violet-500/30 transition-colors whitespace-nowrap">Am I overspending?</button>
+    </div>
+    
+    <!-- Input Area -->
+    <div class="p-4 border-t border-zinc-800 bg-zinc-950 rounded-b-2xl">
+        <div class="relative flex items-center">
+            <input id="ai-chat-input" type="text" placeholder="Ask about your finances..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-4 pr-12 py-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all placeholder:text-zinc-600">
+            <button id="ai-chat-send" class="absolute right-2 text-violet-400 hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-violet-500/10">
+                <span class="material-symbols-outlined">send</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Contextual FAB (Dashboard relevant) -->
 <a href="{{ url_for('addexpense') }}" class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
 <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">add</span>
@@ -427,6 +516,175 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         updateChart('week');
+        
+        // AI Insights fetch on load
+        fetch('/ai/insights')
+          .then(r => r.json())
+          .then(data => {
+            document.getElementById('ai-predicted-total').textContent = '₹' + (data.predicted_total || 0).toLocaleString('en-IN');
+            const statusEl = document.getElementById('ai-budget-status');
+            const statusMap = {
+                good: {text:'On Track', cls:'bg-emerald-500/20 text-emerald-400'}, 
+                warning: {text:'Caution', cls:'bg-yellow-500/20 text-yellow-400'}, 
+                danger: {text:'Over Budget', cls:'bg-red-500/20 text-red-400'}, 
+                neutral: {text:'No Data', cls:'bg-zinc-700/20 text-zinc-400'}
+            };
+            const st = statusMap[data.budget_status] || statusMap.neutral;
+            statusEl.textContent = st.text;
+            statusEl.className = 'px-3 py-1 rounded-full text-xs font-bold ' + st.cls;
+            
+            const trendEl = document.getElementById('ai-trend');
+            const trendMap = {up: '↑ Increasing', down: '↓ Decreasing', stable: '→ Stable'};
+            trendEl.textContent = trendMap[data.trend] || '→ Stable';
+            
+            const tipsList = document.getElementById('ai-tips-list');
+            if (data.tips && data.tips.length > 0) {
+              tipsList.innerHTML = data.tips.map(t => '<li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">💡</span><span>' + t + '</span></li>').join('');
+            }
+            const summaryEl = document.getElementById('ai-summary');
+            if (summaryEl && data.summary) summaryEl.textContent = data.summary;
+          })
+          .catch(() => {
+            const list = document.getElementById('ai-tips-list');
+            if(list) list.innerHTML = '<li class="text-zinc-500">Could not load AI insights. Is Ollama running?</li>';
+          });
+    });
+
+    const refreshBtn = document.getElementById('ai-refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.textContent = 'Refreshing...';
+            fetch('/ai/insights?refresh=true').then(r => r.json()).then(data => {
+                location.reload();
+            }).catch(() => { this.disabled = false; this.textContent = 'Refresh'; });
+        });
+    }
+
+    // AI Chat Script
+    const chatToggle = document.getElementById('ai-chat-toggle');
+    const chatPanel = document.getElementById('ai-chat-panel');
+    const chatInput = document.getElementById('ai-chat-input');
+    const chatMessages = document.getElementById('ai-chat-messages');
+    const chatSend = document.getElementById('ai-chat-send');
+
+    if (chatToggle && chatPanel) {
+        chatToggle.addEventListener('click', () => {
+            chatPanel.classList.toggle('hidden');
+            chatToggle.classList.toggle('hidden');
+        });
+
+        document.getElementById('ai-chat-close').addEventListener('click', () => {
+            chatPanel.classList.add('hidden');
+            chatToggle.classList.remove('hidden');
+        });
+    }
+
+    function addMessage(content, isUser) {
+        if (!chatMessages) return null;
+        const div = document.createElement('div');
+        div.className = isUser ? 'flex justify-end mb-3' : 'flex justify-start mb-3';
+        const bubble = document.createElement('div');
+        bubble.className = isUser
+            ? 'bg-primary text-on-primary px-4 py-2 rounded-2xl rounded-br-sm max-w-[80%] text-sm'
+            : 'bg-zinc-800 text-zinc-100 px-4 py-2 rounded-2xl rounded-bl-sm max-w-[80%] text-sm';
+        bubble.textContent = content;
+        div.appendChild(bubble);
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return bubble;
+    }
+
+    function sendMessage(message) {
+        if (!message.trim() || !chatInput || !chatSend || !chatMessages) return;
+        addMessage(message, true);
+        chatInput.value = '';
+        chatInput.disabled = true;
+        chatSend.disabled = true;
+
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'flex justify-start mb-3';
+        typingDiv.id = 'ai-typing';
+        typingDiv.innerHTML = '<div class="bg-zinc-800 text-zinc-400 px-4 py-2 rounded-2xl rounded-bl-sm text-sm"><span class="animate-pulse">Thinking...</span></div>';
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        let aiBubble = null;
+        let fullText = '';
+
+        fetch('/ai/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: message})
+        }).then(response => {
+            if (!response.ok) return response.json().then(d => { throw new Error(d.error || 'Error'); });
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            function read() {
+                reader.read().then(({done, value}) => {
+                    if (done) {
+                        chatInput.disabled = false;
+                        chatSend.disabled = false;
+                        chatInput.focus();
+                        return;
+                    }
+                    const text = decoder.decode(value);
+                    const lines = text.split('\n');
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.error) {
+                                    const typing = document.getElementById('ai-typing');
+                                    if (typing) typing.remove();
+                                    addMessage(data.error, false);
+                                    chatInput.disabled = false;
+                                    chatSend.disabled = false;
+                                    return;
+                                }
+                                if (data.content) {
+                                    const typing = document.getElementById('ai-typing');
+                                    if (typing) typing.remove();
+                                    fullText += data.content;
+                                    if (!aiBubble) {
+                                        aiBubble = addMessage(fullText, false);
+                                    } else {
+                                        aiBubble.textContent = fullText;
+                                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                                    }
+                                }
+                                if (data.done) {
+                                    chatInput.disabled = false;
+                                    chatSend.disabled = false;
+                                    chatInput.focus();
+                                    return;
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                    read();
+                });
+            }
+            read();
+        }).catch(err => {
+            const typing = document.getElementById('ai-typing');
+            if (typing) typing.remove();
+            addMessage(err.message || 'Could not connect to AI.', false);
+            chatInput.disabled = false;
+            chatSend.disabled = false;
+        });
+    }
+
+    if (chatSend && chatInput) {
+        chatSend.addEventListener('click', () => sendMessage(chatInput.value));
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(chatInput.value); }
+        });
+    }
+
+    document.querySelectorAll('.ai-quick-ask').forEach(btn => {
+        btn.addEventListener('click', () => sendMessage(btn.textContent.trim()));
     });
 </script>
 </body></html>

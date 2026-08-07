@@ -2,7 +2,7 @@ from imports import (
     os, math, datetime, urllib, ssl, load_dotenv, NullPool,
     Flask, render_template, redirect, session, request, url_for, flash,
     generate_password_hash, check_password_hash, CSRFProtect,
-    db, User, Expense, RegistrationForm, LoginForm
+    db, User, Expense, RegistrationForm, LoginForm , json , requests
 )
 
 app = Flask(__name__)
@@ -44,6 +44,11 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 csrf = CSRFProtect(app)
 db.init_app(app)
+
+# Register AI Blueprint
+from ai_service import ai_bp
+app.register_blueprint(ai_bp)
+csrf.exempt(ai_bp)  # AI endpoints use JSON, not forms
 
 @app.after_request
 def add_security_headers(response):
@@ -287,6 +292,95 @@ def home():
     stats = get_dashboard_stats(expenses)
     
     return render_template('home.html', username=session['user'], expenses=expenses_list, stats=stats)
+
+@app.route('/history', methods=['GET'])
+def history():
+    if 'user_id' not in session:
+        flash("Please login first", "danger")
+        return redirect(url_for('login'))
+        
+    user_id = session.get('user_id')
+    query = Expense.query.filter_by(user_id=user_id)
+    
+    filter_type = request.args.get('filter', 'all')
+    category_filter = request.args.get('category', 'all')
+    search_query = request.args.get('search', '').strip()
+    sort_order = request.args.get('sort', 'date_desc')
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    
+    today = datetime.date.today()
+    
+    # Date Filtering
+    if filter_type == 'past_week':
+        query = query.filter(Expense.date >= today - datetime.timedelta(days=7))
+    elif filter_type == 'past_month':
+        query = query.filter(Expense.date >= today - datetime.timedelta(days=30))
+    elif filter_type == 'past_3_months':
+        query = query.filter(Expense.date >= today - datetime.timedelta(days=90))
+    elif filter_type == 'custom':
+        if start_date_str:
+            try:
+                s_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                query = query.filter(Expense.date >= s_date)
+            except ValueError:
+                pass
+        if end_date_str:
+            try:
+                e_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                query = query.filter(Expense.date <= e_date)
+            except ValueError:
+                pass
+                
+    # Category Filtering
+    if category_filter and category_filter != 'all':
+        query = query.filter(Expense.category == category_filter)
+        
+    # Search Query
+    if search_query:
+        query = query.filter(
+            (Expense.description.ilike(f"%{search_query}%")) |
+            (Expense.category.ilike(f"%{search_query}%"))
+        )
+        
+    # Sorting
+    if sort_order == 'date_asc':
+        query = query.order_by(Expense.date.asc(), Expense.id.asc())
+    elif sort_order == 'amount_desc':
+        query = query.order_by(Expense.amount.desc(), Expense.date.desc())
+    elif sort_order == 'amount_asc':
+        query = query.order_by(Expense.amount.asc(), Expense.date.desc())
+    else:  # date_desc default
+        query = query.order_by(Expense.date.desc(), Expense.id.desc())
+        
+    expenses = query.all()
+    expenses_list = [exp.to_dict() for exp in expenses]
+    
+    total_amount = sum(exp.amount for exp in expenses)
+    count = len(expenses)
+    avg_amount = total_amount / count if count > 0 else 0.0
+    
+    categories = list(CATEGORY_META.keys())
+    
+    stats = {
+        'total_amount': round(total_amount, 2),
+        'count': count,
+        'avg_amount': round(avg_amount, 2)
+    }
+    
+    return render_template(
+        'history.html',
+        username=session['user'],
+        expenses=expenses_list,
+        categories=categories,
+        stats=stats,
+        filter_type=filter_type,
+        category_filter=category_filter,
+        search_query=search_query,
+        sort_order=sort_order,
+        start_date=start_date_str,
+        end_date=end_date_str
+    )
 
 @app.route('/addexpense', methods=['GET', 'POST'])
 def addexpense():
