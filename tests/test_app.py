@@ -247,3 +247,34 @@ def test_register_long_username(client):
     # Validation failed in WTForms, should render template again (200 OK) with errors
     assert response.status_code == 200
     assert b"Field cannot be longer than 80 characters" in response.data or b"Invalid" in response.data or b"Register" in response.data
+
+def test_history_unauthenticated(client):
+    response = client.get("/history")
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/login"
+
+def test_history_authenticated(client):
+    client.post("/register", data={"username": "history_user", "password": "testpassword", "submit": "Sign Up"})
+    client.post("/login", data={"username": "history_user", "password": "testpassword", "submit": "Sign In"})
+
+    client.post("/addexpense", data={"amount": "150.00", "category": "Education", "date": "2024-01-10", "description": "Course"})
+    client.post("/addexpense", data={"amount": "50.00", "category": "Food & Dining", "date": "2024-01-12", "description": "Dinner"})
+
+    # Test GET history
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"Course" in response.data
+    assert b"Dinner" in response.data
+
+    # Test category filter
+    response = client.get("/history?category=Education")
+    assert response.status_code == 200
+    assert b"Course" in response.data
+    assert b"Dinner" not in response.data
+
+    # Test search
+    response = client.get("/history?search=Dinner")
+    assert response.status_code == 200
+    assert b"Dinner" in response.data
+    assert b"Course" not in response.data
+
