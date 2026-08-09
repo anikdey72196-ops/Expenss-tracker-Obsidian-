@@ -210,7 +210,6 @@ def test_api_signup_oversized_payloads():
         })
         assert response.status_code == 400
         assert response.get_json()["error"] == "Password must be a string not exceeding 72 characters"
-        assert response.get_json()["error"] == "Password must be between 8 and 72 characters."
 
     with api_app.app_context():
         db.drop_all()
