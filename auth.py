@@ -4,6 +4,30 @@ from imports import (
     create_access_token, User, db
 )
 
+
+import time
+api_login_attempts = {}
+API_LOGIN_RATE_LIMIT_SECONDS = 60
+API_LOGIN_MAX_ATTEMPTS = 5
+
+def check_api_login_rate_limit(ip_address):
+    now = time.time()
+    # Cleanup old IPs to prevent memory leak (DoS)
+    keys_to_delete = [ip for ip, atts in api_login_attempts.items() if not any(now - t < API_LOGIN_RATE_LIMIT_SECONDS for t in atts)]
+    for key in keys_to_delete:
+        del api_login_attempts[key]
+
+    attempts = api_login_attempts.get(ip_address, [])
+    attempts = [t for t in attempts if now - t < API_LOGIN_RATE_LIMIT_SECONDS]
+
+    if len(attempts) >= API_LOGIN_MAX_ATTEMPTS:
+        api_login_attempts[ip_address] = attempts
+        return False
+
+    attempts.append(now)
+    api_login_attempts[ip_address] = attempts
+    return True
+
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth_bp.route('/signup', methods=['POST'])
@@ -52,6 +76,10 @@ def signup():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
+    if not check_api_login_rate_limit(client_ip):
+        return jsonify({"error": "Too many login attempts. Please try again later."}), 429
+
     """Authenticate and generate JWT."""
     data = request.get_json()
     

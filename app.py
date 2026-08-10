@@ -5,6 +5,30 @@ from imports import (
     db, User, Expense, RegistrationForm, LoginForm , json , requests
 )
 
+
+import time
+login_attempts = {}
+LOGIN_RATE_LIMIT_SECONDS = 60
+LOGIN_MAX_ATTEMPTS = 5
+
+def check_login_rate_limit(ip_address):
+    now = time.time()
+    # Cleanup old IPs to prevent memory leak (DoS)
+    keys_to_delete = [ip for ip, atts in login_attempts.items() if not any(now - t < LOGIN_RATE_LIMIT_SECONDS for t in atts)]
+    for key in keys_to_delete:
+        del login_attempts[key]
+
+    attempts = login_attempts.get(ip_address, [])
+    attempts = [t for t in attempts if now - t < LOGIN_RATE_LIMIT_SECONDS]
+
+    if len(attempts) >= LOGIN_MAX_ATTEMPTS:
+        login_attempts[ip_address] = attempts
+        return False
+
+    attempts.append(now)
+    login_attempts[ip_address] = attempts
+    return True
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
 
@@ -256,6 +280,11 @@ def register():
     
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
+        if not check_login_rate_limit(client_ip):
+            flash("Too many login attempts. Please try again later.", "danger")
+            return redirect(url_for('login'))
     form = LoginForm()
     if request.method == 'POST':
         if form.validate_on_submit():
