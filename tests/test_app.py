@@ -17,6 +17,8 @@ def client():
     # Setup database
     with flask_app.app_context():
         db.create_all()
+        from app import login_attempts
+        login_attempts.clear()
 
     with flask_app.test_client() as client:
         yield client
@@ -277,3 +279,43 @@ def test_history_authenticated(client):
     assert b"Dinner" in response.data
     assert b"Course" not in response.data
 
+
+def test_login_rate_limiting_app(client):
+    client.post("/register", data={"username": "rluser_app", "password": "testpassword", "submit": "Sign Up"})
+
+    # 5 attempts should be allowed (we'll just use wrong passwords to not redirect to home immediately)
+    for _ in range(5):
+        response = client.post("/login", data={"username": "rluser_app", "password": "wrongpassword", "submit": "Sign In"}, environ_base={'REMOTE_ADDR': '1.2.3.4'})
+        assert b"Invalid credentials" in response.data or response.status_code == 302
+
+    # The 6th attempt should be rate limited
+    response = client.post("/login", data={"username": "rluser_app", "password": "testpassword", "submit": "Sign In"}, environ_base={'REMOTE_ADDR': '1.2.3.4'}, follow_redirects=True)
+    assert b"Too many login attempts. Please try again later." in response.data
+
+def test_login_rate_limiting_api():
+    import os
+    os.environ['PYTEST_CURRENT_TEST'] = 'true'
+    from expense_api import create_app
+    api_app = create_app()
+    api_app.config['TESTING'] = True
+    api_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    api_app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
+
+    with api_app.app_context():
+        db.create_all()
+
+    with api_app.test_client() as api_client:
+        api_client.post("/auth/signup", json={"username": "rluser_api", "password": "testpassword"})
+
+        # 5 attempts should be allowed
+        for _ in range(5):
+            response = api_client.post("/auth/login", json={"username": "rluser_api", "password": "wrongpassword"}, environ_base={'REMOTE_ADDR': '5.6.7.8'})
+            assert response.status_code == 401
+
+        # The 6th attempt should be rate limited
+        response = api_client.post("/auth/login", json={"username": "rluser_api", "password": "testpassword"}, environ_base={'REMOTE_ADDR': '5.6.7.8'})
+        assert response.status_code == 429
+        assert response.get_json()["error"] == "Too many login attempts. Please try again later."
+
+    with api_app.app_context():
+        db.drop_all()
