@@ -14,10 +14,10 @@ def signup():
         return jsonify({"error": "Username and password are required"}), 400
 
     if not isinstance(data['username'], str) or len(data['username']) > 80:
-        return jsonify({"error": "Username must be between 3 and 80 characters."}), 400
+        return jsonify({"error": "Username must be a string not exceeding 80 characters"}), 400
 
     if not isinstance(data['password'], str) or len(data['password']) > 72:
-        return jsonify({"error": "Password must be between 8 and 72 characters."}), 400
+        return jsonify({"error": "Password must be a string not exceeding 72 characters"}), 400
 
     username = data.get('username', '')
     password = data.get('password', '')
@@ -58,7 +58,6 @@ def login():
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({"error": "Username and password are required"}), 400
         
-    if not isinstance(data['username'], str) or not isinstance(data['password'], str) or len(data['username']) > 80 or len(data['password']) > 72:
     if not isinstance(data['username'], str) or not isinstance(data['password'], str) or len(data['username']) > 80 or len(data['password']) > 128:
         return jsonify({"error": "Invalid username or password"}), 401
 

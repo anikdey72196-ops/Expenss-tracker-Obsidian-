@@ -112,11 +112,31 @@ def _get_expense_summary(user_id):
     }
 
 
+def _get_active_model():
+    """Determine active Ollama model, falling back to installed models if needed."""
+    model = os.environ.get('OLLAMA_MODEL', 'qwen2.5-coder:7b')
+    try:
+        resp = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
+        if resp.status_code == 200:
+            models = [m.get('name', '') for m in resp.json().get('models', [])]
+            if model in models:
+                return model
+            for m in models:
+                if any(k in m.lower() for k in ['qwen', 'coder', 'gemma', 'llama', 'mistral']):
+                    return m
+            if models:
+                return models[0]
+    except Exception:
+        pass
+    return model
+
+
 def _call_ollama(messages, stream=False, num_predict=256, timeout=300):
-    """Call the Ollama chat API with increased timeout (300s) to handle model cold-starts."""
+    """Call the Ollama chat API with auto-resolved model and timeout handling."""
     url = f"{OLLAMA_BASE_URL}/api/chat"
+    model_name = _get_active_model()
     payload = {
-        "model": OLLAMA_MODEL,
+        "model": model_name,
         "messages": messages,
         "stream": stream,
         "options": {
