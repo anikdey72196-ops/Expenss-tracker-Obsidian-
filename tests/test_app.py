@@ -14,6 +14,13 @@ def client():
     # Also override ENGINE_OPTIONS for testing with sqlite
     flask_app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
 
+    import app
+    if hasattr(app, 'login_attempts'):
+        app.login_attempts.clear()
+    import auth
+    if hasattr(auth, 'login_attempts'):
+        auth.login_attempts.clear()
+
     # Setup database
     with flask_app.app_context():
         db.create_all()
@@ -277,3 +284,65 @@ def test_history_authenticated(client):
     assert b"Dinner" in response.data
     assert b"Course" not in response.data
 
+
+
+def test_login_rate_limit(client):
+    # 5 attempts should trigger rate limit
+    for i in range(5):
+        resp = client.post("/login", data={
+            "username": "wronguser",
+            "password": "wrongpassword",
+            "submit": "Sign In"
+        }, environ_base={'REMOTE_ADDR': '127.0.0.1'})
+        assert resp.status_code == 302
+        assert resp.headers["Location"] == "/login"
+
+    # The 6th attempt should also fail, and trigger flash message
+    resp = client.post("/login", data={
+        "username": "wronguser",
+        "password": "wrongpassword",
+        "submit": "Sign In"
+    }, environ_base={'REMOTE_ADDR': '127.0.0.1'})
+
+    assert resp.status_code == 302
+    assert resp.headers["Location"] == "/login"
+
+    resp2 = client.get("/login")
+    assert b"Too many login attempts. Please try again later." in resp2.data
+
+def test_api_login_rate_limit():
+    import os
+    os.environ['PYTEST_CURRENT_TEST'] = 'true'
+    from expense_api import create_app
+    api_app = create_app()
+    api_app.config['TESTING'] = True
+    api_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    api_app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
+
+    import auth
+    if hasattr(auth, 'login_attempts'):
+        auth.login_attempts.clear()
+
+    from imports import db
+
+    with api_app.app_context():
+        db.create_all()
+
+    with api_app.test_client() as api_client:
+        for i in range(5):
+            resp = api_client.post("/auth/login", json={
+                "username": "wronguser",
+                "password": "wrongpassword"
+            }, environ_base={'REMOTE_ADDR': '127.0.0.1'})
+            assert resp.status_code == 401
+
+        resp = api_client.post("/auth/login", json={
+            "username": "wronguser",
+            "password": "wrongpassword"
+        }, environ_base={'REMOTE_ADDR': '127.0.0.1'})
+
+        assert resp.status_code == 429
+        assert resp.get_json()["error"] == "Too many login attempts. Please try again later."
+
+    with api_app.app_context():
+        db.drop_all()
