@@ -1,3 +1,4 @@
+import time
 from imports import (
     os, math, datetime, urllib, ssl, load_dotenv, NullPool,
     Flask, render_template, redirect, session, request, url_for, flash,
@@ -254,10 +255,26 @@ def register():
                 return redirect(url_for('register'))
     return render_template('register.html', form=form)
     
+login_attempts = {}
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if request.method == 'POST':
+        ip = request.remote_addr
+        now = time.time()
+
+        # Cleanup old IPs to prevent memory leak
+        keys_to_delete = [k for k, v in login_attempts.items() if not any(now - t < 60 for t in v)]
+        for k in keys_to_delete:
+            del login_attempts[k]
+
+        attempts = [t for t in login_attempts.get(ip, []) if now - t < 60]
+        if len(attempts) >= 5:
+            flash("Too many login attempts. Please try again later.", "danger")
+            return redirect(url_for('login'))
+        login_attempts[ip] = attempts + [now]
+
         if form.validate_on_submit():
             try:
                 # Find the user by their username

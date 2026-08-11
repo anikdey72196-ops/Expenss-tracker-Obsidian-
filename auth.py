@@ -1,3 +1,4 @@
+import time
 from imports import (
     Blueprint, request, jsonify,
     generate_password_hash, check_password_hash,
@@ -50,9 +51,24 @@ def signup():
     
     return jsonify({"message": "User created successfully"}), 201
 
+login_attempts = {}
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """Authenticate and generate JWT."""
+    ip = request.remote_addr
+    now = time.time()
+
+    # Cleanup old IPs to prevent memory leak
+    keys_to_delete = [k for k, v in login_attempts.items() if not any(now - t < 60 for t in v)]
+    for k in keys_to_delete:
+        del login_attempts[k]
+
+    attempts = [t for t in login_attempts.get(ip, []) if now - t < 60]
+    if len(attempts) >= 5:
+        return jsonify({"error": "Too many login attempts. Please try again later."}), 429
+    login_attempts[ip] = attempts + [now]
+
     data = request.get_json()
     
     if not data or not data.get('username') or not data.get('password'):
