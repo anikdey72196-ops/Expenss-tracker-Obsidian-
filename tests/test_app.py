@@ -14,6 +14,13 @@ def client():
     # Also override ENGINE_OPTIONS for testing with sqlite
     flask_app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
 
+    import app
+    if hasattr(app, 'login_attempts'):
+        app.login_attempts.clear()
+    import auth
+    if hasattr(auth, 'api_login_attempts'):
+        auth.api_login_attempts.clear()
+
     # Setup database
     with flask_app.app_context():
         db.create_all()

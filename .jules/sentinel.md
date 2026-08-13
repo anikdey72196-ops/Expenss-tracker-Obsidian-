@@ -46,3 +46,8 @@
 **Vulnerability:** Input fields lacked standardized boundary limits (e.g., descriptions allowing unlimited length) and multiple validation paths had duplicated, conflicting logic (like checking `len > 128` on one line and `len > 72` in another line). This caused both DoS potential (excessive parsing/hashing) and 500 crashes (Null values in APIs or DataErrors).
 **Learning:** Security validations (like limiting description to 255 chars or passwords to 72 chars) must be applied uniformly across both UI (WTForms) and API logic. Validation logic must handle edge cases like `null` gracefully (e.g. `data.get('description') or ''`) to prevent 500 errors.
 **Prevention:** Unify validation logic, write clear test cases for edge limits, and ensure all text fields entering the database explicitly map to the schema limits.
+
+## 2024-08-13 - [Fix] Missing Rate Limiting on Login Endpoints
+**Vulnerability:** The application was missing rate limiting on authentication endpoints (`/login` in `app.py` and `/auth/login` in `auth.py`). This allows attackers to perform brute-force or credential stuffing attacks without restriction.
+**Learning:** Authentication endpoints are prime targets for brute-force attacks and must be protected with rate limiting to prevent automated password guessing. Both web form routes and API routes must be protected to ensure consistent security.
+**Prevention:** Implement rate limiting (e.g., max 5 attempts per minute per IP) using in-memory state tracking (like dictionaries) or dedicated libraries (like `flask-limiter`) across all authentication entry points.
