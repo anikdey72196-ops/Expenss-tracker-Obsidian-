@@ -254,10 +254,27 @@ def register():
                 return redirect(url_for('register'))
     return render_template('register.html', form=form)
     
+import time
+login_attempts = {}
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if request.method == 'POST':
+        ip = request.remote_addr
+        now = time.time()
+
+        # cleanup old IPs
+        if len(login_attempts) > 1000:
+            for k in list(login_attempts.keys()):
+                if not login_attempts[k] or now - login_attempts[k][-1] > 60:
+                    login_attempts.pop(k, None)
+
+        login_attempts[ip] = [t for t in login_attempts.get(ip, []) if now - t < 60]
+        if len(login_attempts[ip]) >= 5:
+            flash("Too many login attempts. Please try again later.", "danger")
+            return redirect(url_for('login'))
+        login_attempts[ip].append(now)
         if form.validate_on_submit():
             try:
                 # Find the user by their username

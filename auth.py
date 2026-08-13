@@ -50,9 +50,26 @@ def signup():
     
     return jsonify({"message": "User created successfully"}), 201
 
+import time
+api_login_attempts = {}
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """Authenticate and generate JWT."""
+    ip = request.remote_addr
+    now = time.time()
+
+    # cleanup old IPs
+    if len(api_login_attempts) > 1000:
+        for k in list(api_login_attempts.keys()):
+            if not api_login_attempts[k] or now - api_login_attempts[k][-1] > 60:
+                api_login_attempts.pop(k, None)
+
+    api_login_attempts[ip] = [t for t in api_login_attempts.get(ip, []) if now - t < 60]
+    if len(api_login_attempts[ip]) >= 5:
+        return jsonify({"error": "Too many login attempts. Please try again later."}), 429
+    api_login_attempts[ip].append(now)
+
     data = request.get_json()
     
     if not data or not data.get('username') or not data.get('password'):
