@@ -7,6 +7,11 @@ from imports import db, User, Expense
 @pytest.fixture
 def client():
     # Configure app for testing
+    import extensions
+    extensions.login_attempts.clear()
+    import ai_service
+    ai_service._rate_limit_cache.clear()
+
     flask_app.config['TESTING'] = True
     flask_app.config['WTF_CSRF_ENABLED'] = False
     flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'

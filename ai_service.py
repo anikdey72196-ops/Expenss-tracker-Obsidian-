@@ -19,6 +19,10 @@ RATE_LIMIT_SECONDS = 3  # Reduced to 3 seconds for better UX
 
 def _check_rate_limit(user_id):
     """Returns True if rate limited, False if OK."""
+    # Bound the cache dictionary to prevent memory leak DoS
+    if len(_rate_limit_cache) > 1000:
+        _rate_limit_cache.clear()
+
     now = time.time()
     key = f"ai_rate_{user_id}"
     last_time = _rate_limit_cache.get(key, 0)

@@ -4,6 +4,7 @@ from imports import (
     generate_password_hash, check_password_hash, CSRFProtect,
     db, User, Expense, RegistrationForm, LoginForm , json , requests
 )
+from extensions import is_rate_limited
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
@@ -258,6 +259,10 @@ def register():
 def login():
     form = LoginForm()
     if request.method == 'POST':
+        if is_rate_limited(request.remote_addr):
+            flash("Too many login attempts. Please try again later.", "danger")
+            return redirect(url_for('login'))
+
         if form.validate_on_submit():
             try:
                 # Find the user by their username
