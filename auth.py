@@ -3,6 +3,7 @@ from imports import (
     generate_password_hash, check_password_hash,
     create_access_token, User, db
 )
+from extensions import is_rate_limited
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -53,6 +54,9 @@ def signup():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """Authenticate and generate JWT."""
+    if is_rate_limited(request.remote_addr):
+        return jsonify({"error": "Too many login attempts. Please try again later."}), 429
+
     data = request.get_json()
     
     if not data or not data.get('username') or not data.get('password'):
