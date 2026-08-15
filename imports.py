@@ -17,7 +17,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 
 from sqlalchemy.pool import NullPool
 
-from extensions import db, jwt
+from extensions import db, jwt, limiter
 from models import User, Expense
 from form import RegistrationForm, LoginForm
 
