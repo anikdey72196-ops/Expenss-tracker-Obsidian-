@@ -46,3 +46,8 @@
 **Vulnerability:** Input fields lacked standardized boundary limits (e.g., descriptions allowing unlimited length) and multiple validation paths had duplicated, conflicting logic (like checking `len > 128` on one line and `len > 72` in another line). This caused both DoS potential (excessive parsing/hashing) and 500 crashes (Null values in APIs or DataErrors).
 **Learning:** Security validations (like limiting description to 255 chars or passwords to 72 chars) must be applied uniformly across both UI (WTForms) and API logic. Validation logic must handle edge cases like `null` gracefully (e.g. `data.get('description') or ''`) to prevent 500 errors.
 **Prevention:** Unify validation logic, write clear test cases for edge limits, and ensure all text fields entering the database explicitly map to the schema limits.
+
+## 2026-08-15 - [Fix] In-Memory Rate Limiting and DoS Prevention on Login
+**Vulnerability:** The `/login` endpoints in both web and API pathways lacked rate limiting, exposing the application to brute-force and credential stuffing attacks. Additionally, naively tracking rate limits in an unbounded in-memory dictionary can lead to memory exhaustion (Denial of Service).
+**Learning:** Security mechanisms like rate limiting must themselves be bounded to prevent them from becoming an attack vector (e.g. memory DoS via spoofed IPs). Global test state must also be isolated to prevent intermittent test failures.
+**Prevention:** Implement bounded rate limiting dictionaries with explicit pruning mechanics. Clear global rate limit state inside testing fixtures.

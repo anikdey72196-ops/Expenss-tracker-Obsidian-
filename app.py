@@ -2,7 +2,7 @@ from imports import (
     os, math, datetime, urllib, ssl, load_dotenv, NullPool,
     Flask, render_template, redirect, session, request, url_for, flash,
     generate_password_hash, check_password_hash, CSRFProtect,
-    db, User, Expense, RegistrationForm, LoginForm , json , requests
+    db, limiter, User, Expense, RegistrationForm, LoginForm , json , requests
 )
 
 app = Flask(__name__)
@@ -44,6 +44,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 csrf = CSRFProtect(app)
 db.init_app(app)
+limiter.init_app(app)
 
 # Register AI Blueprint
 from ai_service import ai_bp
@@ -56,6 +57,15 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     return response
+
+# Custom rate limit error handler
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    if request.is_json:
+        from flask import jsonify
+        return jsonify(error="Too many login attempts. Please try again later."), 429
+    flash("Too many login attempts. Please try again later.", "danger")
+    return redirect(url_for('login'))
 
 # Ensure app.config overrides are applied before create_all
 with app.app_context():
@@ -255,6 +265,7 @@ def register():
     return render_template('register.html', form=form)
     
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def login():
     form = LoginForm()
     if request.method == 'POST':

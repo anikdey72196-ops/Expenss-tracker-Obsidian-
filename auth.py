@@ -1,7 +1,7 @@
 from imports import (
     Blueprint, request, jsonify,
     generate_password_hash, check_password_hash,
-    create_access_token, User, db
+    create_access_token, User, db, limiter
 )
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -51,6 +51,7 @@ def signup():
     return jsonify({"message": "User created successfully"}), 201
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     """Authenticate and generate JWT."""
     data = request.get_json()

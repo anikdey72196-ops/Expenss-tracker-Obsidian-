@@ -4,8 +4,11 @@ import pytest
 from app import app as flask_app
 from imports import db, User, Expense
 
+from imports import limiter
+
 @pytest.fixture
 def client():
+    limiter.reset()
     # Configure app for testing
     flask_app.config['TESTING'] = True
     flask_app.config['WTF_CSRF_ENABLED'] = False
@@ -277,3 +280,59 @@ def test_history_authenticated(client):
     assert b"Dinner" in response.data
     assert b"Course" not in response.data
 
+def test_login_rate_limit(client):
+    from imports import limiter
+    limiter.reset()
+
+    # Attempt 5 times
+    for _ in range(5):
+        response = client.post("/login", data={
+            "username": "someuser",
+            "password": "somepassword",
+            "submit": "Sign In"
+        })
+        assert response.status_code == 302
+
+    # The 6th attempt should be rate limited and redirected (due to our custom 429 handler returning a redirect for html)
+    response = client.post("/login", data={
+        "username": "someuser",
+        "password": "somepassword",
+        "submit": "Sign In"
+    })
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/login"
+
+    # We should also check the rate limit on the API endpoint
+    import os
+    os.environ['PYTEST_CURRENT_TEST'] = 'true'
+    from expense_api import create_app
+    api_app = create_app()
+    api_app.config['TESTING'] = True
+    api_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    api_app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
+
+    with api_app.app_context():
+        db.create_all()
+
+    with api_app.test_client() as api_client:
+        # Clear rate limit state before test
+        limiter.reset()
+
+        # 5 attempts should fail due to invalid user/pass (401) or missing user
+        for _ in range(5):
+            res = api_client.post("/auth/login", json={
+                "username": "someuser",
+                "password": "somepassword"
+            })
+            assert res.status_code in [400, 401]
+
+        # 6th attempt should hit rate limit (429)
+        res = api_client.post("/auth/login", json={
+            "username": "someuser",
+            "password": "somepassword"
+        })
+        assert res.status_code == 429
+
+    with api_app.app_context():
+        db.drop_all()
