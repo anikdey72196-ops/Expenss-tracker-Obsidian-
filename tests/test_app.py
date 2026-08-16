@@ -3,6 +3,7 @@ os.environ['PYTEST_CURRENT_TEST'] = 'true'
 import pytest
 from app import app as flask_app
 from imports import db, User, Expense
+import ai_service
 
 @pytest.fixture
 def client():
@@ -17,6 +18,8 @@ def client():
     # Setup database
     with flask_app.app_context():
         db.create_all()
+
+    ai_service._rate_limit_cache.clear()
 
     with flask_app.test_client() as client:
         yield client
