@@ -21,6 +21,11 @@ def _check_rate_limit(user_id):
     """Returns True if rate limited, False if OK."""
     now = time.time()
     key = f"ai_rate_{user_id}"
+
+    # 🛡️ Sentinel: Prevent memory leak DoS by bounding dictionary size
+    if len(_rate_limit_cache) > 10000:
+        _rate_limit_cache.clear()
+
     last_time = _rate_limit_cache.get(key, 0)
     if now - last_time < RATE_LIMIT_SECONDS:
         return True
