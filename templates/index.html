@@ -1,238 +1,620 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obsidian | Modern Expense Tracker</title>
+    <!-- Three.js & GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Google Fonts & Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #a78bfa;
+            --primary-glow: rgba(167, 139, 250, 0.35);
+            --bg: #09090b;
+            --surface-container: #121215;
+            --surface-container-low: #0f0f12;
+            --surface-container-highest: #1e1e22;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: #27272a;
+            --text: #fafafa;
+            --text-variant: #a1a1aa;
+        }
 
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            "colors": {
-                    "surface-container-low": "#0f0f12",
-                    "primary-fixed": "#ede9fe",
-                    "secondary-container": "#27272a",
-                    "on-error": "#1a0000",
-                    "secondary-fixed": "#a1a1aa",
-                    "on-secondary": "#09090b",
-                    "primary": "#a78bfa",
-                    "error": "#ef4444",
-                    "surface-container-high": "#18181b",
-                    "on-tertiary-fixed-variant": "#047857",
-                    "primary-fixed-dim": "#c4b5fd",
-                    "on-primary-fixed": "#2e1065",
-                    "tertiary-fixed": "#bbf7d0",
-                    "surface-variant": "#18181b",
-                    "on-error-container": "#fca5a5",
-                    "surface-dim": "#0c0c0f",
-                    "surface-tint": "#a78bfa",
-                    "tertiary-container": "#065f46",
-                    "surface": "#0c0c0f",
-                    "secondary": "#71717a",
-                    "on-secondary-fixed": "#18181b",
-                    "on-surface": "#fafafa",
-                    "secondary-fixed-dim": "#71717a",
-                    "inverse-primary": "#5b21b6",
-                    "on-secondary-fixed-variant": "#3f3f46",
-                    "on-primary-container": "#ede9fe",
-                    "on-primary": "#0a0012",
-                    "primary-container": "#7c3aed",
-                    "on-tertiary-fixed": "#003318",
-                    "surface-container-highest": "#1e1e22",
-                    "inverse-surface": "#fafafa",
-                    "on-primary-fixed-variant": "#5b21b6",
-                    "on-secondary-container": "#a1a1aa",
-                    "tertiary-fixed-dim": "#6ee7b7",
-                    "background": "#09090b",
-                    "tertiary": "#34d399",
-                    "surface-container": "#121215",
-                    "surface-bright": "#18181b",
-                    "on-tertiary": "#001a12",
-                    "error-container": "#3b1111",
-                    "on-background": "#fafafa",
-                    "on-surface-variant": "#a1a1aa",
-                    "outline-variant": "#27272a",
-                    "outline": "#52525b",
-                    "surface-container-lowest": "#09090b",
-                    "inverse-on-surface": "#09090b",
-                    "on-tertiary-container": "#bbf7d0"
-            },
-            "fontFamily": {
-                    "headline": ["Geist", "sans-serif"],
-                    "display": ["Geist", "sans-serif"],
-                    "body": ["Geist", "sans-serif"],
-                    "label": ["Geist", "sans-serif"]
-            }
-          },
+        * {
+            box-sizing: border-box;
         }
-      }
-    </script>
-<style>
-        @font-face {
-            font-family: 'Geist';
-            src: url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
         }
-        body {
-            font-family: 'Geist', sans-serif;
-            background-color: #09090b;
+
+        /* Three.js Canvas Container */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+
+        /* Navbar */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 8%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 50;
+            background: rgba(9, 9, 11, 0.85);
+            backdrop-filter: blur(12px);
+            border-b: 1px solid var(--glass-border);
         }
-        .grid-pattern {
-            background-image: radial-gradient(#27272a 1px, transparent 1px);
-            background-size: 32px 32px;
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.4rem;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
         }
-        .glow-effect {
-            box-shadow: 0 0 40px -10px rgba(167, 139, 250, 0.3);
+
+        .logo span.icon {
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            color: var(--text-variant);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+        }
+
+        .btn-signin {
+            color: var(--text-variant) !important;
+        }
+
+        .btn-get-started {
+            background: var(--primary) !important;
+            color: #0a0012 !important;
+            padding: 0.5rem 1.25rem !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .btn-get-started:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        /* Hero Section */
+        section.hero {
+            position: relative;
+            min-height: 100vh;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 0 8%;
+            z-index: 10;
+        }
+
+        .hero-content {
+            max-width: 650px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            background: var(--surface-container-low);
+            border: 1px solid var(--glass-border);
+            color: var(--primary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1.05;
+            margin: 0 0 1.2rem 0;
+            letter-spacing: -2px;
+            color: var(--text);
+        }
+
+        h1 span.highlight {
+            color: var(--primary);
+        }
+
+        p.hero-sub {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: var(--text-variant);
+            margin-bottom: 2.2rem;
+            max-width: 540px;
+        }
+
+        .cta-button {
+            padding: 1rem 2.5rem;
+            background: var(--primary);
+            color: #0a0012;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 12px;
+            display: inline-block;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 40px -10px var(--primary-glow);
+        }
+
+        .cta-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 50px -5px var(--primary-glow);
+        }
+
+        /* Features Section */
+        .features-section {
+            position: relative;
+            z-index: 10;
+            padding: 100px 8% 120px 8%;
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .features-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+            letter-spacing: -1px;
+        }
+
+        .features-header p {
+            color: var(--text-variant);
+            font-size: 1.1rem;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--surface-container);
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(167, 139, 250, 0.5);
+            transform: translateY(-4px);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon.purple { background: rgba(124, 58, 237, 0.2); color: var(--primary); }
+        .card-icon.green { background: rgba(6, 95, 70, 0.3); color: #34d399; }
+        .card-icon.red { background: rgba(59, 17, 17, 0.4); color: #ef4444; }
+
+        .card h3 {
+            color: var(--text);
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+
+        .card p {
+            color: var(--text-variant);
+            line-height: 1.6;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        /* Testimonial Section */
+        .testimonial-section {
+            position: relative;
+            z-index: 10;
+            padding: 100px 8%;
+            background: rgba(15, 15, 18, 0.5);
+            text-align: center;
+            border-y: 1px solid var(--glass-border);
+        }
+
+        .testimonial-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .quote-icon {
+            font-size: 3rem !important;
+            color: var(--primary);
+            opacity: 0.5;
+            margin-bottom: 1.5rem;
+        }
+
+        blockquote {
+            font-size: 1.6rem;
+            font-weight: 500;
+            font-style: italic;
+            line-height: 1.4;
+            margin: 0 0 2rem 0;
+            color: var(--text);
+        }
+
+        .author {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .author-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid var(--glass-border);
+            filter: grayscale(100%);
+        }
+
+        .author-info {
+            text-align: left;
+        }
+
+        .author-name {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .author-role {
+            font-size: 0.85rem;
+            color: var(--text-variant);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            position: relative;
+            z-index: 10;
+            padding: 100px 8%;
+        }
+
+        .cta-box {
+            max-width: 900px;
+            margin: 0 auto;
+            border-radius: 24px;
+            background: var(--surface-container-highest);
+            border: 1px solid var(--glass-border);
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .cta-box h2 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+        }
+
+        .cta-box p {
+            color: var(--text-variant);
+            font-size: 1.1rem;
+            max-width: 550px;
+            margin: 0 auto 2.5rem auto;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 10;
+            border-t: 1px solid var(--glass-border);
+            padding: 3rem 8%;
+            background: #050507;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .footer-copy {
+            color: #71717a;
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 3.2rem; }
+            nav { padding: 1rem 5%; }
+            section.hero { padding: 0 5%; }
+            .features-section { padding: 60px 5%; }
+            .cta-box h2 { font-size: 2.2rem; }
         }
     </style>
 </head>
-<body class="bg-background text-on-surface selection:bg-primary/30 selection:text-primary-fixed">
-<!-- TopNavBar -->
-<nav class="fixed top-0 w-full z-50 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800">
-<div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center font-geist tracking-tight">
-<div class="text-xl font-bold text-zinc-50 tracking-tighter flex items-center gap-2">
-<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">layers</span>
-                Obsidian
+<body>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="{{ url_for('index') }}" class="logo">
+            <span class="material-symbols-outlined icon" style="font-variation-settings: 'FILL' 1;">layers</span>
+            <span>Obsidian</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('login') }}" class="btn-signin">Sign In</a>
+            <a href="{{ url_for('register') }}" class="btn-get-started">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="badge">
+                <span class="badge-dot"></span>
+                Now with Automated API Imports
             </div>
-<div class="hidden md:flex items-center gap-8">
-{# <a class="text-zinc-400 hover:text-zinc-100 transition-colors" href="#">Features</a>
-<a class="text-zinc-400 hover:text-zinc-100 transition-colors" href="#">Insights</a>
-<a class="text-zinc-400 hover:text-zinc-100 transition-colors" href="#">Pricing</a>
-<a class="text-zinc-400 hover:text-zinc-100 transition-colors" href="#">Docs</a> #}
-</div>
-<div class="flex items-center gap-4">
-<a class="hidden md:inline-block text-zinc-400 hover:text-zinc-100 transition-colors text-sm font-medium text-center" href="{{ url_for('login') }}">Sign In</a>
-<a class="inline-block text-center bg-primary hover:bg-primary-fixed-dim text-on-primary px-5 py-2 rounded-lg font-semibold text-sm active:scale-95 duration-200 transition-all" href="{{ url_for('register') }}">
-                    Get Started
-                </a>
-</div>
-</div>
-</nav>
-<main class="relative pt-16">
-<!-- Hero Section -->
-<section class="relative min-h-[921px] flex flex-col items-center justify-center px-6 overflow-hidden">
-<div class="absolute inset-0 grid-pattern opacity-20 pointer-events-none"></div>
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
-<div class="relative z-10 text-center max-w-4xl mx-auto">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-outline-variant bg-surface-container-low text-xs font-medium text-primary mb-8">
-<span class="relative flex h-2 w-2">
-<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-</span>
-                    Now with Automated API Imports
+            <h1>Financial Clarity for the <br><span class="highlight">Modern Developer.</span></h1>
+            <p class="hero-sub">
+                A high-performance, dark-themed expense tracker that puts precision first. Designed for those who demand speed, security, and clean aesthetics.
+            </p>
+            <a href="{{ url_for('register') }}" class="cta-button">Get Started for Free</a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="features-header">
+            <h2>Engineered for Precision</h2>
+            <p>Built with the same care you put into your own codebases.</p>
+        </div>
+        <div class="features">
+            <div class="card">
+                <div class="card-icon purple">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitoring</span>
                 </div>
-<h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter text-on-surface mb-6 leading-[1.1]">
-                    Financial Clarity for the <span class="text-primary">Modern Developer.</span>
-</h1>
-<p class="text-lg md:text-xl text-on-surface-variant max-w-2xl mx-auto mb-10 leading-relaxed">
-                    A high-performance, dark-themed expense tracker that puts precision first. Designed for those who demand speed, security, and clean aesthetics.
-                </p>
-<div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-<a class="inline-block text-center w-full sm:w-auto px-8 py-4 bg-primary text-on-primary rounded-xl font-bold text-lg hover:scale-[1.02] active:scale-95 transition-all glow-effect" href="{{ url_for('register') }}">
-                        Get Started for Free
-                    </a>
-</div>
-</div>
-<!-- Product Preview Mockup -->
-<div class="relative mt-20 w-full max-w-5xl mx-auto rounded-t-2xl border-x border-t border-outline-variant bg-surface-container-low p-2">
-<div class="rounded-t-xl overflow-hidden border border-outline-variant">
-<img class="w-full h-auto object-cover grayscale-[0.2] contrast-[1.1]" data-alt="Modern sleek dark user interface dashboard showing financial analytics charts and high contrast data visualizations on a terminal black background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCgH2j_UYcITAIEgxJJBwCE-B9RhKh4VbGLt6SbwmUnPgkxfDgGUUsRWGwK2YBjEdbtR3xNcnMpGGpEyDv2pMY_oo2mN9Q096ZyefT1V4kKkSRILhiLVB424IPG5p2JI4_VtbcRvGJaDMtqQ_JXpuAEi-nbCKx4E0lDJz7lP1x5mXnlhJ2011r2IX9tvr3Xh1DSZ5s5FnmTqZUe57IsD3yttafL-UwetMywZ-7Or5qwvAGqr_g7H8PrLxz6zx0n9r59VF_e1HK-9c"/>
-</div>
-</div>
-</section>
-<!-- Features Bento Grid -->
-<section class="py-32 px-6 max-w-7xl mx-auto">
-<div class="mb-16 text-center">
-<h2 class="text-3xl font-bold tracking-tight text-on-surface mb-4">Engineered for Precision</h2>
-<p class="text-on-surface-variant">Built with the same care you put into your own codebases.</p>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<!-- Card 1: Deep Analytics -->
-<div class="group p-8 rounded-xl bg-surface-container border border-outline-variant hover:border-primary/50 transition-all">
-<div class="w-12 h-12 rounded-lg bg-primary-container/20 flex items-center justify-center mb-6 text-primary">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitoring</span>
-</div>
-<h3 class="text-xl font-bold mb-3">Deep Analytics</h3>
-<p class="text-on-surface-variant leading-relaxed">
-                        Visualize trends with precise, high-contrast charts. Drill down into every micro-transaction with granular filters.
-                    </p>
-</div>
-<!-- Card 2: Developer-Grade -->
-<div class="group p-8 rounded-xl bg-surface-container border border-outline-variant hover:border-primary/50 transition-all md:scale-105 md:shadow-2xl md:shadow-primary/5">
-<div class="w-12 h-12 rounded-lg bg-tertiary-container/20 flex items-center justify-center mb-6 text-tertiary">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">keyboard</span>
-</div>
-<h3 class="text-xl font-bold mb-3">Developer-Grade</h3>
-<p class="text-on-surface-variant leading-relaxed">
-                        Clean, fast, and keyboard-friendly interface. Command palette integration for power users who hate clicking.
-                    </p>
-</div>
-<!-- Card 3: Secure by Default -->
-<div class="group p-8 rounded-xl bg-surface-container border border-outline-variant hover:border-primary/50 transition-all">
-<div class="w-12 h-12 rounded-lg bg-error-container/20 flex items-center justify-center mb-6 text-error">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">encrypted</span>
-</div>
-<h3 class="text-xl font-bold mb-3">Secure by Default</h3>
-<p class="text-on-surface-variant leading-relaxed">
-                        Your financial data stays private and encrypted. Zero-knowledge architecture means we can't see your data.
-                    </p>
-</div>
-</div>
-</section>
-<!-- Testimonial Section -->
-<section class="py-32 bg-surface-container-low/50 relative overflow-hidden">
-<div class="max-w-4xl mx-auto px-6 relative z-10 text-center">
-<span class="material-symbols-outlined text-primary text-5xl mb-8 opacity-50" style="font-variation-settings: 'FILL' 1;">format_quote</span>
-<blockquote class="text-2xl md:text-3xl font-medium text-on-surface italic leading-snug mb-10">
-                    "Obsidian is the first financial tool that doesn't feel like a chore to use. The speed and aesthetic match my development environment perfectly. It's essentially the VS Code of finance."
-                </blockquote>
-<div class="flex items-center justify-center gap-4">
-<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant">
-<img class="w-full h-full object-cover grayscale" data-alt="Professional developer portrait with soft lighting, dark background, and subtle purple highlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8o6JRXlz1iYQaYfoNglD2wLgAt2MuC7Fu8wAYFgCeN5sACixQbQpcZNG1H5EUu82EOGprm5TxZryKjsSgGelzsNOGeJJIP3NNWGSmVeHCxzAdKOS0XJqCifNvX5vc8h7wCIeDq0ON6RRev-Mcrq0FP4U-bHEbiDzRiQYZ-wD_Lx5s0L7DiUAz4aaAoQ0aoOYlR31vNZiN1v7khX25xsFojaiVE4QhG1ittK393eI8SKeVft3CziwyibNZOz7vCdifhgiYFfnVOUU"/>
-</div>
-<div class="text-left">
-<div class="font-bold text-on-surface">Ganesh Gaitonde</div>
-<div class="text-sm text-on-surface-variant">Senior Software Architect</div>
-</div>
-</div>
-</div>
-</section>
-<!-- CTA Section -->
-<section class="py-32 px-6">
-<div class="max-w-5xl mx-auto rounded-3xl bg-surface-container-highest border border-outline-variant p-12 md:p-20 text-center relative overflow-hidden">
-<div class="absolute inset-0 grid-pattern opacity-10"></div>
-<div class="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-[100px]"></div>
-<div class="relative z-10">
-<h2 class="text-4xl md:text-5xl font-extrabold tracking-tighter mb-6">Join the Dark Side of Finance</h2>
-<p class="text-lg text-on-surface-variant mb-10 max-w-xl mx-auto leading-relaxed">
-                        Stop fighting with cluttered spreadsheets. Start tracking with precision and speed today.
-                    </p>
-<div class="flex flex-col sm:flex-row items-center justify-center gap-8">
-<a class="inline-block text-center bg-primary text-on-primary px-10 py-4 rounded-xl font-bold text-lg hover:scale-105 active:scale-95 transition-all" href="{{ url_for('register') }}">
-                            Sign Up Now
-                        </a>
+                <h3>Deep Analytics</h3>
+                <p>Visualize trends with precise, high-contrast charts. Drill down into every micro-transaction with granular filters.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon green">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">keyboard</span>
+                </div>
+                <h3>Developer-Grade</h3>
+                <p>Clean, fast, and keyboard-friendly interface. Command palette integration for power users who hate clicking.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon red">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">encrypted</span>
+                </div>
+                <h3>Secure by Default</h3>
+                <p>Your financial data stays private and encrypted. Zero-knowledge architecture means we can't see your data.</p>
+            </div>
+        </div>
+    </section>
 
-</div>
-</div>
-</div>
-</section>
-</main>
-<!-- Footer -->
-<footer class="w-full py-12 px-6 mt-auto bg-zinc-950 border-t border-zinc-800">
-<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 font-geist text-sm">
-<div class="flex flex-col items-center md:items-start gap-4">
-<div class="text-lg font-bold text-zinc-50">Obsidian</div>
-<p class="text-zinc-500">© 2026 Obsidian Labs. Precision in Darkness.</p>
-</div>
-<div class="flex gap-8">
+    <!-- Testimonial Section -->
+    <section class="testimonial-section">
+        <div class="testimonial-container">
+            <span class="material-symbols-outlined quote-icon" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+            <blockquote class="quote-text">
+                "Obsidian is the first financial tool that doesn't feel like a chore to use. The speed and aesthetic match my development environment perfectly. It's essentially the VS Code of finance."
+            </blockquote>
+            <div class="author">
+                <img class="author-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8o6JRXlz1iYQaYfoNglD2wLgAt2MuC7Fu8wAYFgCeN5sACixQbQpcZNG1H5EUu82EOGprm5TxZryKjsSgGelzsNOGeJJIP3NNWGSmVeHCxzAdKOS0XJqCifNvX5vc8h7wCIeDq0ON6RRev-Mcrq0FP4U-bHEbiDzRiQYZ-wD_Lx5s0L7DiUAz4aaAoQ0aoOYlR31vNZiN1v7khX25xsFojaiVE4QhG1ittK393eI8SKeVft3CziwyibNZOz7vCdifhgiYFfnVOUU" alt="Developer portrait">
+                <div class="author-info">
+                    <div class="author-name">Ganesh Gaitonde</div>
+                    <div class="author-role">Senior Software Architect</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-box">
+            <h2>Join the Dark Side of Finance</h2>
+            <p>Stop fighting with cluttered spreadsheets. Start tracking with precision and speed today.</p>
+            <a href="{{ url_for('register') }}" class="cta-button">Sign Up Now</a>
+        </div>
+    </section>
 
-</div>
-</div>
-</footer>
-</body></html>
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div>
+                <div class="footer-brand">Obsidian</div>
+                <div class="footer-copy">© 2026 Obsidian Labs. Precision in Darkness.</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- THREE.JS SCENE SETUP ---
+        let scene, camera, renderer, bars = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const violetLight = new THREE.PointLight(0xa78bfa, 2.5, 50);
+            violetLight.position.set(5, 5, 5);
+            scene.add(violetLight);
+
+            const emeraldLight = new THREE.PointLight(0x34d399, 2.0, 50);
+            emeraldLight.position.set(-5, 2, 2);
+            scene.add(emeraldLight);
+
+            // Create 3D Bar Chart
+            const geometry = new THREE.BoxGeometry(0.6, 1, 0.6);
+            const barCount = 10;
+            const spacing = 0.85;
+
+            for (let i = 0; i < barCount; i++) {
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0xa78bfa,
+                    roughness: 0.25,
+                    metalness: 0.75
+                });
+                const bar = new THREE.Mesh(geometry, material);
+
+                // Position bars in a row
+                bar.position.x = (i - barCount / 2) * spacing;
+
+                // Initial scale
+                bar.scale.y = Math.random() * 3 + 1;
+                bar.position.y = bar.scale.y / 2;
+
+                scene.add(bar);
+                bars.push(bar);
+            }
+
+            // Position Camera (shifted right to balance left-aligned hero text)
+            if (window.innerWidth > 768) {
+                camera.position.x = 2.2;
+                camera.position.z = 7;
+                camera.position.y = 1.5;
+            } else {
+                camera.position.x = 0;
+                camera.position.z = 9;
+                camera.position.y = 1;
+            }
+            camera.lookAt(0, 1, 0);
+
+            animate();
+        }
+
+        // --- ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.0015;
+
+            // Subtle floating rotation
+            scene.rotation.y = Math.sin(time * 0.3) * 0.2;
+            scene.rotation.x = Math.cos(time * 0.2) * 0.08;
+
+            // Animate bar heights
+            bars.forEach((bar, index) => {
+                const scale = Math.sin(time * 1.5 + index * 0.6) * 1.2 + 2.4;
+                bar.scale.y = scale;
+                bar.position.y = scale / 2;
+
+                // Dynamic purple/emerald HSL tint
+                const hue = 0.7 + (scale * 0.03); // violet/purple tint
+                bar.material.color.setHSL(hue, 0.7, 0.55);
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // --- INTERACTIVITY & RESPONSIVENESS ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Mouse Parallax
+        window.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) - 0.5;
+            const y = (e.clientY / window.innerHeight) - 0.5;
+
+            gsap.to(scene.rotation, {
+                y: x * 0.4,
+                x: y * 0.2,
+                duration: 1.5,
+                ease: "power2.out"
+            });
+        });
+
+        // Initialize Scene
+        init();
+
+        // GSAP Entrance Animations
+        gsap.from(".badge", { opacity: 0, y: -20, duration: 1, delay: 0.2 });
+        gsap.from("h1", { opacity: 0, y: 40, duration: 1.2, delay: 0.4, ease: "power3.out" });
+        gsap.from("p.hero-sub", { opacity: 0, y: 30, duration: 1.2, delay: 0.6, ease: "power3.out" });
+        gsap.from(".cta-button", { opacity: 0, scale: 0.9, duration: 1, delay: 0.8, ease: "back.out(1.5)" });
+        gsap.from(".card", { opacity: 0, y: 40, duration: 1, stagger: 0.15, delay: 1.0, ease: "power2.out" });
+        gsap.from(".testimonial-container", { opacity: 0, y: 40, duration: 1, delay: 1.2, ease: "power2.out" });
+    </script>
+</body>
+</html>

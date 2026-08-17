@@ -15,27 +15,37 @@ DB_HOST = os.environ.get('DB_HOST', 'localhost')
 DB_NAME = os.environ.get('DB_NAME', 'expense_tracker')
 DB_PORT = os.environ.get('DB_PORT', '3306')
 
+is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV') is not None
+
 if os.environ.get('PYTEST_CURRENT_TEST'):
     db_uri = 'sqlite:///:memory:'
+elif os.environ.get('DATABASE_URL'):
+    db_uri = os.environ.get('DATABASE_URL')
+    if db_uri.startswith("postgres://"):
+        db_uri = db_uri.replace("postgres://", "postgresql://", 1)
+elif is_vercel and os.environ.get('DB_HOST', 'localhost') in ('localhost', '127.0.0.1'):
+    # On Vercel without remote DB env vars, use SQLite in /tmp directory
+    db_uri = 'sqlite:////tmp/expense_tracker.db'
 else:
     db_uri = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
-if DB_HOST != 'localhost' and DB_HOST != '127.0.0.1' and not os.environ.get('PYTEST_CURRENT_TEST'):
-    ca_path = '/etc/pki/tls/certs/ca-bundle.crt'
-    if not os.path.exists(ca_path):
-        # Fallback for local testing or different OS if needed
-        import certifi
-        ca_path = certifi.where()
 
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'poolclass': NullPool,
-        'connect_args': {
-            'ssl': {
-                'ca': ca_path
-            }
-        }
-    }
+engine_options = {
+    'poolclass': NullPool,
+}
+
+if not db_uri.startswith('sqlite') and DB_HOST not in ('localhost', '127.0.0.1'):
+    connect_args = {'connect_timeout': 5}
+    if os.environ.get('DB_USE_SSL', 'false').lower() == 'true':
+        ca_path = '/etc/pki/tls/certs/ca-bundle.crt'
+        if not os.path.exists(ca_path):
+            import certifi
+            ca_path = certifi.where()
+        connect_args['ssl'] = {'ca': ca_path}
+    engine_options['connect_args'] = connect_args
+
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = engine_options
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Session security

@@ -1,128 +1,374 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Expense Tracker | Login</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obsidian Finance | Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#a78bfa",
-                        "on-primary": "#0a0012",
-                        "primary-container": "#7c3aed",
-                        "surface": "#0c0c0f",
-                        "surface-container": "#121215",
-                        "surface-container-low": "#0f0f12",
-                        "surface-container-high": "#18181b",
-                        "on-surface": "#fafafa",
-                        "on-surface-variant": "#a1a1aa",
-                        "outline": "#52525b",
-                        "outline-variant": "#27272a",
-                        "background": "#09090b",
-                        "error": "#ef4444",
-                        "tertiary": "#34d399",
-                    },
-                },
-            },
-        }
-    </script>
     <style>
-        body { font-family: 'Inter', 'Geist', sans-serif; background-color: #09090b; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .grid-pattern {
-            background-image: radial-gradient(#27272a 1px, transparent 1px);
-            background-size: 32px 32px;
+        :root {
+            --bg-dark: #090a0f;
+            --card-bg: #0f172a;
+            --card-inner: #1e293b;
+            --text-heading: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --accent-orange: #ea580c;
+            --accent-orange-hover: #c2410c;
+            --accent-teal: #0284c7;
+            --error: #ef4444;
+            --success: #10b981;
         }
-        .glow-effect { box-shadow: 0 0 60px -15px rgba(167, 139, 250, 0.25); }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(rgba(234, 88, 12, 0.08) 1.5px, transparent 1.5px),
+                linear-gradient(135deg, #090a0f 0%, #0f172a 60%, #1e293b 100%);
+            background-size: 32px 32px, 100% 100%;
+            color: var(--text-heading);
+        }
+
+        /* Ambient Glow Blobs */
+        .blob {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: rgba(234, 88, 12, 0.12);
+            filter: blur(120px);
+            border-radius: 50%;
+            z-index: 0;
+            top: 10%;
+            left: 15%;
+            animation: float 14s infinite alternate ease-in-out;
+        }
+
+        .blob-2 {
+            background: rgba(2, 132, 199, 0.12);
+            right: 15%;
+            bottom: 10%;
+            width: 400px;
+            height: 400px;
+            animation: float 18s infinite alternate-reverse ease-in-out;
+        }
+
+        @keyframes float {
+            from { transform: translate(-30px, -30px); }
+            to { transform: translate(30px, 30px); }
+        }
+
+        /* Centered Container & Brand Header */
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 0 20px;
+            z-index: 10;
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-heading);
+            text-decoration: none;
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            transition: color 0.2s;
+        }
+
+        .brand-logo:hover {
+            color: var(--accent-orange);
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+            color: var(--accent-orange);
+        }
+
+        /* 3D Glass Login Card */
+        .login-card {
+            width: 100%;
+            padding: 40px 35px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.45);
+            text-align: center;
+            transition: transform 0.12s ease-out;
+            transform-style: preserve-3d;
+        }
+
+        h2 {
+            color: var(--text-heading);
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+
+        /* Flash Message Badges */
+        .flash-message {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .flash-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .flash-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+
+        .flash-info {
+            background: rgba(234, 88, 12, 0.15);
+            border: 1px solid rgba(234, 88, 12, 0.3);
+            color: #fdba74;
+        }
+
+        /* Form Inputs */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            margin-left: 4px;
+        }
+
+        .input-wrap {
+            position: relative;
+            transform: translateZ(15px);
+        }
+
+        .input-wrap input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--card-inner);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            outline: none;
+            color: var(--text-heading);
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-wrap input::placeholder {
+            color: #64748b;
+        }
+
+        .input-wrap input:focus {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.25);
+        }
+
+        .field-error {
+            color: var(--error);
+            font-size: 0.75rem;
+            margin-top: 5px;
+            margin-left: 4px;
+        }
+
+        /* Action CTA Button */
+        .submit-btn {
+            width: 100%;
+            padding: 13px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent-orange);
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            transform: translateZ(20px);
+            box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-orange-hover);
+            transform: translateZ(22px);
+            box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
+        }
+
+        .submit-btn:active {
+            transform: translateZ(15px);
+            opacity: 0.95;
+        }
+
+        /* Footer Links */
+        .footer-links {
+            margin-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-orange);
+        }
+
+        /* Shake Error Animation */
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
     </style>
 </head>
-<body class="bg-background text-on-surface min-h-screen flex items-center justify-center relative overflow-hidden">
-    <!-- Background Effects -->
-    <div class="absolute inset-0 grid-pattern opacity-15 pointer-events-none"></div>
-    <div class="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-primary/8 rounded-full blur-[140px] pointer-events-none"></div>
-    <div class="absolute bottom-1/3 left-1/3 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+<body>
 
-    <div class="relative z-10 w-full max-w-md mx-4">
-        <!-- Logo -->
-        <div class="text-center mb-8">
-            <a href="{{ url_for('index') }}" class="inline-flex items-center gap-2 text-2xl font-bold tracking-tighter text-on-surface hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">layers</span>
+    <!-- Ambient Glow Blobs -->
+    <div class="blob"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="login-container">
+        <!-- Logo Header -->
+        <div class="brand-header">
+            <a href="{{ url_for('index') }}" class="brand-logo">
+                <span class="material-symbols-outlined">layers</span>
                 Obsidian
             </a>
-            <p class="text-on-surface-variant text-sm mt-2">Welcome back</p>
         </div>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="mb-4 px-4 py-3 rounded-lg border text-sm
-                        {% if category == 'danger' %}
-                            bg-red-500/10 border-red-500/30 text-red-400
-                        {% elif category == 'success' %}
-                            bg-emerald-500/10 border-emerald-500/30 text-emerald-400
-                        {% else %}
-                            bg-primary/10 border-primary/30 text-primary
-                        {% endif %}
-                    ">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <!-- 3D Glass Login Card -->
+        <div class="login-card" id="card">
+            <h2>Welcome Back</h2>
+            <p class="subtitle">Please enter your details</p>
 
-        <!-- Login Card -->
-        <div class="bg-surface-container border border-outline-variant rounded-2xl p-8 glow-effect">
-            <form method="POST" action="{{ url_for('login') }}">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message 
+                            {% if category == 'danger' %}flash-danger{% elif category == 'success' %}flash-success{% else %}flash-info{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}" id="loginForm">
                 {{ form.hidden_tag() }}
 
-                <!-- Username -->
-                <div class="mb-5">
-                    <label class="block text-sm font-medium text-on-surface-variant mb-2" for="username">
-                        Username
-                    </label>
-                    {{ form.username(
-                        class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-sm text-on-surface placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                        placeholder="Enter your username",
-                        id="username"
-                    ) }}
+                <!-- Username Field -->
+                <div class="input-group">
+                    <div class="input-wrap">
+                        <label for="username">Username</label>
+                        {{ form.username(
+                            class="input-control",
+                            placeholder="Enter your username",
+                            id="username"
+                        ) }}
+                    </div>
                     {% for error in form.username.errors %}
-                        <p class="mt-1 text-xs text-error">{{ error }}</p>
+                        <p class="field-error">{{ error }}</p>
                     {% endfor %}
                 </div>
 
-                <!-- Password -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-on-surface-variant mb-2" for="password">
-                        Password
-                    </label>
-                    {{ form.password(
-                        class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-sm text-on-surface placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all",
-                        placeholder="Enter your password",
-                        id="password"
-                    ) }}
+                <!-- Password Field -->
+                <div class="input-group">
+                    <div class="input-wrap">
+                        <label for="password">Password</label>
+                        {{ form.password(
+                            class="input-control",
+                            placeholder="••••••••",
+                            id="password"
+                        ) }}
+                    </div>
                     {% for error in form.password.errors %}
-                        <p class="mt-1 text-xs text-error">{{ error }}</p>
+                        <p class="field-error">{{ error }}</p>
                     {% endfor %}
                 </div>
 
-                <!-- Submit -->
+                <!-- Action CTA Button -->
                 {{ form.submit(
-                    class="w-full bg-primary text-on-primary font-bold py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all text-sm cursor-pointer"
+                    class="submit-btn",
+                    id="loginBtn"
                 ) }}
             </form>
-        </div>
 
-        <!-- Register Link -->
-        <p class="text-center text-sm text-on-surface-variant mt-6">
-            Don't have an account?
-            <a href="{{ url_for('register') }}" class="text-primary font-semibold hover:underline">Register</a>
-        </p>
+            <!-- Footer Links -->
+            <div class="footer-links">
+                <a href="{{ url_for('index') }}">← Back to Home</a>
+                <a href="{{ url_for('register') }}">Create Account</a>
+            </div>
+        </div>
     </div>
+
+    <script>
+        const card = document.getElementById('card');
+        const body = document.querySelector('body');
+
+        // Smooth 3D Tilt Effect
+        body.addEventListener('mousemove', (e) => {
+            let xAxis = (window.innerWidth / 2 - e.clientX) / 30;
+            let yAxis = (window.innerHeight / 2 - e.clientY) / 30;
+            card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        body.addEventListener('mouseleave', () => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+
+        body.addEventListener('mouseenter', () => {
+            card.style.transition = 'none';
+        });
+
+        // Trigger shake on error
+        if (document.querySelector('.flash-danger') || document.querySelector('.field-error')) {
+            card.classList.add('shake');
+            setTimeout(() => card.classList.remove('shake'), 400);
+        }
+    </script>
 </body>
 </html>
