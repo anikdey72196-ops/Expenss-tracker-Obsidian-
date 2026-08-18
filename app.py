@@ -264,10 +264,34 @@ def register():
                 return redirect(url_for('register'))
     return render_template('register.html', form=form)
     
+import time
+
+login_attempts = {}
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if request.method == 'POST':
+        # Bounded Rate Limiter
+        ip = request.remote_addr
+        now = time.time()
+
+        global login_attempts
+        if len(login_attempts) > 1000:
+            # Sort by the most recent attempt timestamp (the last element in the attempts list)
+            # and keep the 500 most recent ones
+            sorted_items = sorted(login_attempts.items(), key=lambda x: x[1][-1] if x[1] else 0, reverse=True)
+            login_attempts = dict(sorted_items[:500])
+
+        attempts = login_attempts.get(ip, [])
+        attempts = [t for t in attempts if now - t < 60]
+
+        if len(attempts) >= 5:
+            flash("Too many login attempts. Please try again later.", "danger")
+            return render_template('login.html', form=form), 429
+
+        login_attempts[ip] = attempts + [now]
+
         if form.validate_on_submit():
             try:
                 # Find the user by their username
