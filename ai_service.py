@@ -21,6 +21,13 @@ def _check_rate_limit(user_id):
     """Returns True if rate limited, False if OK."""
     now = time.time()
     key = f"ai_rate_{user_id}"
+
+    global _rate_limit_cache
+    if len(_rate_limit_cache) > 1000:
+        # Sort by the timestamp (which is the value) and keep the 500 most recent ones
+        sorted_items = sorted(_rate_limit_cache.items(), key=lambda x: x[1], reverse=True)
+        _rate_limit_cache = dict(sorted_items[:500])
+
     last_time = _rate_limit_cache.get(key, 0)
     if now - last_time < RATE_LIMIT_SECONDS:
         return True

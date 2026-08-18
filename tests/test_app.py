@@ -6,6 +6,12 @@ from imports import db, User, Expense
 
 @pytest.fixture
 def client():
+    # Clear rate limit states
+    import app
+    app.login_attempts.clear()
+    import auth
+    auth.login_attempts.clear()
+
     # Configure app for testing
     flask_app.config['TESTING'] = True
     flask_app.config['WTF_CSRF_ENABLED'] = False
