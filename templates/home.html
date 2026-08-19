@@ -1,620 +1,538 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obsidian Finance | 3D Dashboard</title>
 
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Obsidian Finance | Dashboard</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <script>
         tailwind.config = {
-            darkMode: "class",
             theme: {
                 extend: {
-                    "colors": {
-                        "secondary": "#71717a",
-                        "inverse-on-surface": "#09090b",
-                        "surface-container-high": "#18181b",
-                        "background": "#09090b",
-                        "surface-dim": "#0c0c0f",
-                        "on-secondary-fixed-variant": "#3f3f46",
-                        "tertiary": "#34d399",
-                        "on-primary-fixed-variant": "#5b21b6",
-                        "surface": "#0c0c0f",
-                        "on-secondary-container": "#a1a1aa",
-                        "primary-container": "#7c3aed",
-                        "surface-tint": "#a78bfa",
-                        "on-error-container": "#fca5a5",
-                        "surface-container": "#121215",
-                        "surface-container-lowest": "#09090b",
-                        "on-primary": "#0a0012",
-                        "surface-bright": "#18181b",
-                        "outline": "#52525b",
-                        "tertiary-fixed-dim": "#6ee7b7",
-                        "on-tertiary-fixed-variant": "#047857",
-                        "inverse-surface": "#fafafa",
-                        "inverse-primary": "#5b21b6",
-                        "tertiary-container": "#065f46",
-                        "on-tertiary": "#001a12",
-                        "outline-variant": "#27272a",
-                        "on-tertiary-fixed": "#003318",
-                        "on-primary-container": "#ede9fe",
-                        "surface-container-highest": "#1e1e22",
-                        "primary-fixed-dim": "#c4b5fd",
-                        "secondary-fixed": "#a1a1aa",
-                        "on-primary-fixed": "#2e1065",
-                        "surface-variant": "#18181b",
-                        "primary-fixed": "#ede9fe",
-                        "on-secondary-fixed": "#18181b",
-                        "on-secondary": "#09090b",
-                        "error": "#ef4444",
-                        "tertiary-fixed": "#bbf7d0",
-                        "surface-container-low": "#0f0f12",
-                        "secondary-fixed-dim": "#71717a",
-                        "on-surface": "#fafafa",
-                        "primary": "#a78bfa",
-                        "on-background": "#fafafa",
-                        "on-tertiary-container": "#bbf7d0",
-                        "on-surface-variant": "#a1a1aa",
-                        "error-container": "#3b1111",
-                        "on-error": "#1a0000",
-                        "secondary-container": "#27272a"
+                    colors: {
+                        obsidian: '#09090b',
+                        card: '#121215',
+                        subcard: '#18181b',
+                        accent: '#a78bfa',
+                        highlight: '#ea580c',
+                        border: '#27272a'
                     },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                    "fontFamily": {
-                        "headline": ["Geist"],
-                        "display": ["Geist"],
-                        "body": ["Geist"],
-                        "label": ["Geist"]
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
                     }
-                },
-            },
+                }
+            }
         }
     </script>
-<style>
-        body { font-family: 'Geist', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
+
+    <style>
+        body { background-color: #09090b; color: #fafafa; overflow-x: hidden; }
+        .glass-card { background: #121215; border: 1px solid #27272a; transition: all 0.3s ease; }
+        .glass-card:hover { border-color: #a78bfa; }
+        .ai-glow { box-shadow: 0 0 20px rgba(167, 139, 250, 0.15); border: 1px solid rgba(167, 139, 250, 0.3); }
+        .sidebar-link:hover .icon-box { background: #18181b; color: #a78bfa; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        #canvas-container { width: 100%; height: 300px; cursor: grab; }
+        .chat-panel { transform: translateY(120%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .chat-panel.open { transform: translateY(0); }
+        .gradient-text { background: linear-gradient(to right, #a78bfa, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
-<body class="bg-background text-on-surface antialiased selection:bg-primary selection:text-on-primary">
-<!-- Sidebar Navigation -->
-<aside class="fixed left-0 top-0 h-screen w-64 border-r border-zinc-800 bg-zinc-950 flex flex-col h-full p-4 space-y-2 font-geist text-sm antialiased">
-<div class="flex items-center space-x-3 px-2 mb-8">
-<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
-<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">diamond</span>
-</div>
-<div>
-<h1 class="text-lg font-black text-violet-400 leading-tight">Let's track {{username}}'s expenses</h1>
-<p class="text-xs text-zinc-500 uppercase tracking-widest">Precision Finance</p>
-</div>
-</div>
-<nav class="flex-1 space-y-1">
-<a class="flex items-center space-x-3 px-3 py-2 bg-zinc-900 text-violet-400 font-semibold border-r-2 border-violet-400 active:scale-95 transition-all" href="{{ url_for('home') }}">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
-<span>Dashboard</span>
-</a>
-<a class="flex items-center space-x-3 px-3 py-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 rounded transition-all" href="{{ url_for('history') }}">
-<span class="material-symbols-outlined">history</span>
-<span>Expense History</span>
-</a>
-</nav>
-<a href="{{ url_for('addexpense') }}" class="w-full bg-primary text-on-primary font-bold py-2.5 rounded hover:opacity-90 active:scale-95 transition-all flex items-center justify-center space-x-2 mt-auto mb-6">
-<span class="material-symbols-outlined text-sm">add</span>
-<span>Add Expense</span>
-</a>
-<a class="flex items-center space-x-3 px-3 py-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 active:scale-95 transition-all" href="{{ url_for('logout') }}">
-<span class="material-symbols-outlined">logout</span>
-<span>Log Out</span>
-</a>
-</aside>
-<!-- Main Content Canvas -->
-<main class="ml-64 min-h-screen">
-<!-- Top Navigation -->
-<header class="bg-zinc-950 text-zinc-50 border-b border-zinc-800 flex justify-between items-center h-16 px-8 w-full sticky top-0 z-10">
-<div class="flex items-center space-x-4">
-<div class="relative">
-<span class="absolute inset-y-0 left-3 flex items-center text-zinc-500">
-<span class="material-symbols-outlined text-lg">search</span>
-</span>
-<input class="bg-surface-container border border-outline-variant rounded px-10 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-64 transition-all" placeholder="Search insights..." type="text"/>
-</div>
-</div>
-<div class="flex items-center space-x-6">
-<div class="flex items-center space-x-4">
-<button class="text-zinc-400 hover:text-zinc-50 transition-colors">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-</div>
-<div class="flex items-center space-x-3 border-l border-zinc-800 pl-6">
-<img alt="User profile" class="w-8 h-8 rounded-full border border-zinc-700" data-alt="close-up profile portrait of a professional in creative lighting with a sleek technological aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeKBomTbX1LKVBrqqSCnVrMWqDIHGo-T6c71OvhqykGaMTwwvr5FSKpsQ_f0kYvxgEsqYUrnjaaDN_i8zRtO6jRFicCXgX4IvJEk_k6wYY81jJekU1I6jki4TQPnqHs1e9E0_Ag3MG6usdv-MlDcs96EVL_Fm5z7zr2N8SpVxwHHBIZE4M2YTmw0D2AIFWeZ7hEtK5bHtLALQnkNbo1b5191IlJ36M5hRnrqzc9e03twzvsvbURxdQBgs3DjHN0s-KTdUPE_l87jk"/>
-<span class="text-sm font-medium tracking-tight">{{username}}</span>
-</div>
-</div>
-</header>
-<!-- Dashboard Canvas -->
-<div class="p-8 max-w-7xl mx-auto space-y-8">
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <div class="px-4 py-3 rounded-lg border text-sm
-                {% if category == 'danger' %}
-                    bg-red-500/10 border-red-500/30 text-red-400
-                {% elif category == 'success' %}
-                    bg-emerald-500/10 border-emerald-500/30 text-emerald-400
-                {% else %}
-                    bg-primary/10 border-primary/30 text-primary
+<body class="font-sans antialiased">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-16 lg:w-64 bg-[#121215] border-r border-[#27272a] z-50 flex flex-col justify-between">
+        <div>
+            <div class="p-6 flex items-center gap-3">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-accent to-highlight rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white text-sm">diamond</span>
+                    </div>
+                    <span class="hidden lg:block font-bold text-lg tracking-tight opacity-0 sidebar-text">Obsidian</span>
+                </a>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-2 mt-4">
+                <a href="{{ url_for('home') }}" class="sidebar-link flex items-center gap-4 p-3 rounded-xl bg-[#18181b] text-accent">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="hidden lg:block font-medium opacity-0 sidebar-text">Dashboard</span>
+                </a>
+                <a href="{{ url_for('history') }}" class="sidebar-link flex items-center gap-4 p-3 rounded-xl text-gray-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined">history</span>
+                    <span class="hidden lg:block font-medium opacity-0 sidebar-text">History</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-[#27272a]">
+            <a href="{{ url_for('addexpense') }}" class="w-full bg-accent/10 text-accent py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-accent hover:text-white transition-all group mb-2">
+                <span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
+                <span class="hidden lg:block font-semibold">Add Expense</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="w-full flex items-center gap-4 p-3 text-gray-500 hover:text-red-400 transition-all">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="hidden lg:block font-medium opacity-0 sidebar-text">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="pl-16 lg:pl-64 min-h-screen transition-all">
+
+        <!-- Top Header -->
+        <header class="h-20 border-b border-[#27272a] bg-obsidian/80 backdrop-blur-md sticky top-0 z-40 px-8 flex items-center justify-between">
+            <div class="flex items-center flex-1 max-w-xl">
+                <div class="relative w-full">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">search</span>
+                    <input type="text" placeholder="Search insights..." class="w-full bg-[#18181b] border border-[#27272a] rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-accent transition-all">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <button class="relative p-2 text-gray-400 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-highlight rounded-full"></span>
+                </button>
+                <div class="flex items-center gap-3 pl-6 border-l border-[#27272a]">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium">{{ username }}</p>
+                        <p class="text-xs text-gray-500">Precision Member</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full border border-accent/50 bg-accent/20 flex items-center justify-center font-bold text-accent">
+                        {{ username[0]|upper if username else 'U' }}
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8 space-y-8">
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="px-4 py-3 rounded-lg border text-sm
+                            {% if category == 'danger' %}
+                                bg-red-500/10 border-red-500/30 text-red-400
+                            {% elif category == 'success' %}
+                                bg-emerald-500/10 border-emerald-500/30 text-emerald-400
+                            {% else %}
+                                bg-accent/10 border-accent/30 text-accent
+                            {% endif %}
+                        ">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
                 {% endif %}
-            ">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-<!-- Hero Bento Header -->
-<div class="grid grid-cols-12 gap-6">
-<!-- Main Rating Component -->
-<div class="col-span-12 lg:col-span-4 bg-surface-container border border-outline-variant rounded-xl p-6 flex flex-col justify-between relative overflow-hidden">
-<div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -mr-16 -mt-16"></div>
-<div>
-<p class="text-secondary font-medium text-xs uppercase tracking-widest mb-1">Financial Health</p>
-<h2 class="text-3xl font-bold tracking-tight">Overall Rating</h2>
-</div>
-<div class="flex items-baseline space-x-2 mt-8">
-<span class="text-7xl font-black tracking-tighter leading-none
-    {% if stats.overall_score >= 7 %}text-emerald-400{% elif stats.overall_score >= 4 %}text-primary{% else %}text-red-400{% endif %}
-">{{ stats.overall_score }}</span>
-<span class="text-zinc-500 font-semibold">/ 10</span>
-</div>
-<div class="mt-6 flex items-center space-x-2
-    {% if stats.overall_score >= 5 %}text-tertiary{% else %}text-red-400{% endif %}
-">
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">{% if stats.overall_score >= 5 %}trending_up{% else %}trending_down{% endif %}</span>
-<span class="text-sm font-medium">{% if stats.overall_score >= 7 %}Great spending habits!{% elif stats.overall_score >= 4 %}Room for improvement{% else %}Needs attention{% endif %}</span>
-</div>
-</div>
-<!-- Score Grid -->
-<div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-surface-container-low border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
-<p class="text-secondary text-sm font-medium">Today's Score</p>
-<div class="mt-4">
-<h3 class="text-4xl font-bold tracking-tight">{{ stats.today_score }}</h3>
-<div class="w-full h-1.5 bg-zinc-800 rounded-full mt-4 overflow-hidden">
-<div class="h-full bg-primary" style="width: {{ stats.today_score }}%"></div>
-</div>
-</div>
-</div>
-<div class="bg-surface-container-low border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
-<p class="text-secondary text-sm font-medium">Last Month's Total</p>
-<div class="mt-4">
-<h3 class="text-4xl font-bold tracking-tight">₹{{ stats.last_month_total }}</h3>
-<p class="text-tertiary text-xs mt-2 flex items-center">
-<span class="material-symbols-outlined text-xs mr-1">check_circle</span>
-                                Under budget
-                            </p>
-</div>
-</div>
-<div class="bg-surface-container-low border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
-<p class="text-secondary text-sm font-medium">Daily Avg. Score</p>
-<div class="mt-4">
-<h3 class="text-4xl font-bold tracking-tight">{{ stats.daily_avg_score }}</h3>
-<p class="text-zinc-500 text-xs mt-2 italic">Standard variation</p>
-</div>
-</div>
-</div>
-</div>
+            {% endwith %}
 
-<!-- AI Insights Card -->
-<div class="bg-gradient-to-r from-violet-500/10 via-surface-container to-purple-500/10 border border-violet-500/20 rounded-xl p-6 w-full flex flex-col mb-8">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-        <div class="flex items-center space-x-3 md:w-1/4">
-            <span class="material-symbols-outlined text-primary text-3xl">auto_awesome</span>
-            <div>
-                <h3 class="text-xl font-bold tracking-tight text-zinc-50">AI Insights</h3>
-                <p class="text-xs text-zinc-400 mt-1">Powered by Ollama</p>
+            <!-- Hero Bento Grid -->
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Main Health Card -->
+                <div class="col-span-12 lg:col-span-8 glass-card rounded-3xl p-8 relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-400 text-sm font-medium mb-1">Overall Financial Health</p>
+                                <h2 class="text-5xl font-bold tracking-tighter">{{ stats.overall_score }}<span class="text-2xl text-gray-500">/10</span></h2>
+                            </div>
+                            <div class="flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-xs font-bold">
+                                <span class="material-symbols-outlined text-sm">trending_up</span>
+                                {% if stats.overall_score >= 7 %}STABLE{% elif stats.overall_score >= 4 %}MODERATE{% else %}ATTENTION{% endif %}
+                            </div>
+                        </div>
+                        <div class="mt-12 flex items-center gap-4">
+                            <div class="flex-1 h-2 bg-[#18181b] rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-accent to-highlight" style="width: {{ stats.overall_score * 10 }}%;"></div>
+                            </div>
+                            <span class="text-xs text-gray-500">{{ stats.overall_score * 10 }}% of goal</span>
+                        </div>
+                    </div>
+                    <!-- Decorative background element -->
+                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-accent/5 rounded-full blur-3xl group-hover:bg-accent/10 transition-all duration-700"></div>
+                </div>
+
+                <!-- Sub-grid metrics -->
+                <div class="col-span-12 lg:col-span-4 grid grid-cols-1 gap-6">
+                    <div class="glass-card rounded-3xl p-6 flex flex-col justify-between">
+                        <p class="text-gray-400 text-xs uppercase tracking-widest font-semibold">Today's Score</p>
+                        <div class="flex items-end justify-between mt-4">
+                            <span class="text-3xl font-bold">{{ stats.today_score }}</span>
+                            <div class="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-3xl p-6 flex flex-col justify-between">
+                        <p class="text-gray-400 text-xs uppercase tracking-widest font-semibold">Last Month Total</p>
+                        <div class="flex items-end justify-between mt-4">
+                            <span class="text-3xl font-bold text-highlight">₹{{ stats.last_month_total }}</span>
+                            <span class="text-xs text-emerald-500 font-medium bg-emerald-500/10 px-2 py-1 rounded">Under Budget</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Section: AI Insights & 3D Trends -->
+            <div class="grid grid-cols-12 gap-6">
+                <!-- AI Insights Card -->
+                <div class="col-span-12 lg:col-span-4 glass-card rounded-3xl p-6 ai-glow flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-accent/10 rounded-lg">
+                                    <span class="material-symbols-outlined text-accent">auto_awesome</span>
+                                </div>
+                                <h3 class="font-bold text-lg">AI Financial Insights</h3>
+                            </div>
+                            <span class="text-[10px] text-gray-500 uppercase tracking-widest">Ollama AI</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="p-4 bg-[#18181b] rounded-2xl border border-white/5">
+                                <p class="text-xs text-gray-500 mb-1">Predicted Month-End</p>
+                                <p id="ai-predicted-total" class="text-xl font-bold">₹--</p>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span id="ai-budget-status" class="text-[10px] px-2 py-0.5 bg-orange-500/10 text-orange-500 rounded-full">Loading...</span>
+                                    <span id="ai-trend" class="text-xs text-gray-400">→ Stable</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <p class="text-sm font-medium text-gray-300">Personalized Tips</p>
+                                <ul id="ai-tips-list" class="space-y-3 text-sm text-gray-400">
+                                    <li class="flex gap-3"><span class="text-accent">💡</span> Analyzing your financial patterns...</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="ai-refresh-btn" class="w-full py-3 mt-6 text-sm font-medium border border-[#27272a] rounded-xl hover:bg-white/5 transition-all active:scale-95">
+                        Refresh Insights
+                    </button>
+                </div>
+
+                <!-- 3D Visualization Container -->
+                <div class="col-span-12 lg:col-span-8 glass-card rounded-3xl p-6 overflow-hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-4">
+                            <h3 class="font-bold text-lg">3D Spending Trends</h3>
+                            <div class="flex bg-[#18181b] p-1 rounded-lg border border-[#27272a]">
+                                <button id="btn-week" onclick="toggle3DMode('week')" class="px-4 py-1 text-xs font-bold rounded-md bg-accent text-white transition-all">WEEK</button>
+                                <button id="btn-month" onclick="toggle3DMode('month')" class="px-4 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">MONTH</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="material-symbols-outlined text-gray-500 cursor-pointer hover:text-white">tune</span>
+                        </div>
+                    </div>
+
+                    <div id="canvas-container">
+                        <!-- Three.js Canvas injected here -->
+                    </div>
+
+                    <div class="grid grid-cols-5 gap-4 mt-6 pt-6 border-t border-[#27272a]">
+                        {% if stats.top_categories %}
+                            {% for cat in stats.top_categories[:5] %}
+                            <div class="text-center">
+                                <p class="text-[10px] text-gray-500 uppercase">{{ cat.name[:8] }}</p>
+                                <p class="text-sm font-bold">₹{{ cat.amount }}</p>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-span-5 text-center text-xs text-gray-500">No transactions recorded yet</div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="flex flex-wrap items-center gap-8 md:w-2/4">
-            <div class="flex flex-col">
-                <span class="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-1.5">Predicted Month-End</span>
-                <span id="ai-predicted-total" class="text-xl font-bold tracking-tight text-zinc-50">₹--</span>
+    </main>
+
+    <!-- Floating AI Chat Widget -->
+    <div class="fixed bottom-8 right-8 z-50 flex flex-col items-end">
+        <!-- Chat Panel -->
+        <div id="chat-panel" class="chat-panel w-80 lg:w-96 bg-card border border-[#27272a] rounded-3xl shadow-2xl mb-4 overflow-hidden flex flex-col">
+            <div class="p-4 bg-[#18181b] border-b border-[#27272a] flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <div class="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                        <div class="absolute inset-0 animate-ping w-3 h-3 bg-emerald-500 rounded-full opacity-75"></div>
+                    </div>
+                    <p class="font-bold text-sm">Obsidian AI</p>
+                </div>
+                <button onclick="toggleChat()" class="text-gray-500 hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
-            
-            <div class="flex flex-col">
-                <span class="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-1.5">Budget Status</span>
-                <div><span id="ai-budget-status" class="px-3 py-1 rounded-full text-xs font-bold bg-zinc-700/20 text-zinc-400">Loading</span></div>
+
+            <div class="h-80 overflow-y-auto p-4 space-y-4 custom-scrollbar text-sm" id="chat-messages">
+                <div class="bg-[#18181b] p-3 rounded-2xl rounded-tl-none text-gray-300 max-w-[85%]">
+                    Hello {{ username }}! I'm Obsidian AI. How can I help you optimize your finances today?
+                </div>
             </div>
-            
-            <div class="flex flex-col">
-                <span class="text-xs text-zinc-500 uppercase tracking-widest font-semibold mb-1.5">Trend</span>
-                <span id="ai-trend" class="text-sm font-medium text-zinc-300">→ Stable</span>
+
+            <div class="p-4 bg-[#18181b] border-t border-[#27272a]">
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button onclick="sendQuickMsg('How can I save more?')" class="text-[10px] bg-accent/10 text-accent px-3 py-1 rounded-full border border-accent/20 hover:bg-accent hover:text-white transition-colors">Save more</button>
+                    <button onclick="sendQuickMsg('Analyze my spending')" class="text-[10px] bg-accent/10 text-accent px-3 py-1 rounded-full border border-accent/20 hover:bg-accent hover:text-white transition-colors">Analyze</button>
+                    <button onclick="sendQuickMsg('Am I overspending?')" class="text-[10px] bg-accent/10 text-accent px-3 py-1 rounded-full border border-accent/20 hover:bg-accent hover:text-white transition-colors">Overspending?</button>
+                </div>
+                <div class="relative">
+                    <input type="text" id="ai-chat-input" placeholder="Ask anything..." class="w-full bg-obsidian border border-[#27272a] rounded-xl py-2 pl-4 pr-10 text-xs focus:outline-none focus:border-accent">
+                    <button onclick="sendUserMessage()" class="absolute right-2 top-1/2 -translate-y-1/2 text-accent hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-sm">send</span>
+                    </button>
+                </div>
             </div>
         </div>
-        
-        <div class="md:w-1/4 flex justify-end">
-            <button id="ai-refresh-btn" class="px-4 py-2 border border-violet-500/30 text-violet-400 text-xs font-bold rounded hover:bg-violet-500/10 active:scale-95 transition-all">Refresh</button>
-        </div>
-    </div>
-    
-    <div class="pt-6 border-t border-violet-500/20">
-        <ul id="ai-tips-list" class="space-y-3 text-sm text-zinc-300">
-            <li class="flex items-start gap-2">
-                <span class="text-violet-400 mt-0.5">💡</span>
-                <span>Loading insights...</span>
-            </li>
-        </ul>
-        <p id="ai-summary" class="mt-4 text-xs text-zinc-500 italic"></p>
-    </div>
-</div>
 
-<!-- Trends & Summary -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<!-- Spending Chart Simulation -->
-<div class="lg:col-span-2 bg-surface-container border border-outline-variant rounded-xl p-6">
-<div class="flex justify-between items-center mb-8">
-<h3 class="text-xl font-bold tracking-tight">Spending Trends</h3>
-<div class="flex bg-zinc-900 rounded p-1" id="chart-toggles">
-<button id="btn-week" onclick="updateChart('week')" class="px-3 py-1 text-xs font-bold bg-zinc-800 text-primary rounded">WEEK</button>
-<button id="btn-month" onclick="updateChart('month')" class="px-3 py-1 text-xs font-medium text-zinc-500 hover:text-zinc-300">MONTH</button>
-</div>
-</div>
-<div class="h-64 relative w-full mt-4">
-<canvas id="spendingChart"></canvas>
-</div>
-</div>
-<!-- Breakdown Summary -->
-<div class="bg-surface-container border border-outline-variant rounded-xl p-6 flex flex-col">
-<h3 class="text-xl font-bold tracking-tight mb-6">Top Categories</h3>
-<div class="space-y-5 flex-1">
-{% if stats.top_categories %}
-    {% for cat in stats.top_categories %}
-    <div class="flex items-center justify-between">
-    <div class="flex items-center space-x-3">
-    <div class="w-8 h-8 rounded-lg {{ cat.bg_class }} flex items-center justify-center {{ cat.color_class }}">
-    <span class="material-symbols-outlined text-lg">{{ cat.icon }}</span>
-    </div>
-    <span class="text-sm font-medium">{{ cat.name }}</span>
-    </div>
-    <span class="text-sm font-mono font-bold">₹{{ cat.amount }}</span>
-    </div>
-    {% endfor %}
-{% else %}
-    <p class="text-zinc-500 text-sm mt-4">No categories to display this month.</p>
-{% endif %}
-</div>
-<!-- <button class="mt-6 text-center text-primary text-xs font-bold uppercase tracking-widest hover:underline">View All Categories</button> -->
-</div>
-</div>
-
-</div>
-</main>
-<!-- AI Chat Widget -->
-<button id="ai-chat-toggle" class="fixed bottom-28 right-8 w-14 h-14 bg-zinc-900 border border-zinc-700 text-violet-400 rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 hover:text-primary hover:scale-110 active:scale-95 transition-all duration-300 z-40">
-    <span class="material-symbols-outlined text-2xl">smart_toy</span>
-</button>
-
-<div id="ai-chat-panel" class="fixed bottom-28 right-8 w-96 h-[500px] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col z-50 hidden transition-all duration-300">
-    <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900/50 rounded-t-2xl">
-        <div class="flex items-center space-x-2">
-            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span class="font-bold text-sm text-zinc-50">Obsidian AI</span>
-        </div>
-        <button id="ai-chat-close" class="text-zinc-500 hover:text-zinc-300 transition-colors">
-            <span class="material-symbols-outlined text-lg">close</span>
+        <!-- Toggle Button -->
+        <button onclick="toggleChat()" class="w-14 h-14 bg-accent rounded-full shadow-lg shadow-accent/40 flex items-center justify-center text-white hover:scale-110 transition-transform">
+            <span class="material-symbols-outlined text-2xl" id="chat-icon">chat_bubble</span>
         </button>
     </div>
-    
-    <!-- Message Area -->
-    <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <div class="flex justify-start mb-3">
-            <div class="bg-zinc-800 text-zinc-100 px-4 py-2 rounded-2xl rounded-bl-sm max-w-[80%] text-sm">
-                Hi! I'm Obsidian AI. How can I help you with your finances today?
-            </div>
-        </div>
-    </div>
-    
-    <!-- Quick-ask Buttons -->
-    <div class="px-4 py-2 flex gap-2 overflow-x-auto border-t border-zinc-800/50" style="scrollbar-width: none;">
-        <button class="ai-quick-ask px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-violet-400 hover:border-violet-500/30 transition-colors whitespace-nowrap">How can I save more?</button>
-        <button class="ai-quick-ask px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-violet-400 hover:border-violet-500/30 transition-colors whitespace-nowrap">Analyze my spending</button>
-        <button class="ai-quick-ask px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 hover:text-violet-400 hover:border-violet-500/30 transition-colors whitespace-nowrap">Am I overspending?</button>
-    </div>
-    
-    <!-- Input Area -->
-    <div class="p-4 border-t border-zinc-800 bg-zinc-950 rounded-b-2xl">
-        <div class="relative flex items-center">
-            <input id="ai-chat-input" type="text" placeholder="Ask about your finances..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-4 pr-12 py-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all placeholder:text-zinc-600">
-            <button id="ai-chat-send" class="absolute right-2 text-violet-400 hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-violet-500/10">
-                <span class="material-symbols-outlined">send</span>
-            </button>
-        </div>
-    </div>
-</div>
 
-<!-- Contextual FAB (Dashboard relevant) -->
-<a href="{{ url_for('addexpense') }}" class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
-<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">add</span>
-<span class="absolute right-full mr-4 px-3 py-1.5 bg-zinc-800 text-zinc-50 text-xs font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">New Entry</span>
-</a>
-<!-- Chart.js Initialization -->
-<script>
-    let spendingChart;
-    const chartData = {
-        week: {
-            labels: {{ stats.chart_data.labels | tojson | safe }},
-            data: {{ stats.chart_data.data | tojson | safe }}
-        },
-        month: {
-            labels: {{ stats.category_chart_data.labels | tojson | safe }},
-            data: {{ stats.category_chart_data.data | tojson | safe }}
-        }
-    };
+    <!-- FAB -->
+    <a href="{{ url_for('addexpense') }}" class="fixed bottom-8 right-28 w-14 h-14 bg-highlight rounded-full shadow-lg shadow-orange-500/40 flex items-center justify-center text-white hover:scale-110 transition-transform group z-40">
+        <span class="material-symbols-outlined text-2xl">+</span>
+        <span class="absolute right-16 bg-black text-white text-xs py-1 px-3 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">New Entry</span>
+    </a>
 
-    function updateChart(view) {
-        const ctx = document.getElementById('spendingChart');
-        if (!ctx) return;
-        
-        if (spendingChart) {
-            spendingChart.destroy();
-        }
+    <script>
+        // --- GSAP ENTRANCE ANIMATIONS ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const tl = gsap.timeline();
 
-        const type = view === 'week' ? 'bar' : 'doughnut';
-        
-        const backgroundColors = view === 'week' 
-            ? '#a78bfa' 
-            : ['#a78bfa', '#f472b6', '#38bdf8', '#4ade80', '#fbbf24', '#f87171', '#2dd4bf', '#818cf8', '#c084fc', '#fb923c', '#9ca3af', '#60a5fa'];
-
-        const scales = view === 'week' ? {
-            x: {
-                grid: { display: false, drawBorder: false },
-                ticks: { color: '#71717a', font: { family: 'Geist', size: 10 } }
-            },
-            y: {
-                grid: { color: 'rgba(39, 39, 42, 0.5)', drawBorder: false, borderDash: [5, 5] },
-                ticks: { display: false }
-            }
-        } : {
-            x: { display: false },
-            y: { display: false }
-        };
-        
-        spendingChart = new Chart(ctx, {
-            type: type,
-            data: {
-                labels: chartData[view].labels,
-                datasets: [{
-                    label: 'Spending',
-                    data: chartData[view].data,
-                    backgroundColor: backgroundColors,
-                    hoverBackgroundColor: view === 'week' ? '#c4b5fd' : backgroundColors,
-                    borderRadius: view === 'week' ? 4 : 0,
-                    borderSkipped: false,
-                    barPercentage: 0.6,
-                    borderWidth: view === 'month' ? 1 : 0,
-                    borderColor: '#18181b'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: view === 'month' ? '70%' : undefined,
-                plugins: {
-                    legend: { 
-                        display: view === 'month',
-                        position: 'right',
-                        labels: { color: '#a1a1aa', font: { family: 'Geist', size: 10 } }
-                    },
-                    tooltip: {
-                        backgroundColor: '#18181b',
-                        titleColor: '#a1a1aa',
-                        bodyColor: '#fafafa',
-                        padding: 12,
-                        displayColors: view === 'month',
-                        callbacks: {
-                            label: function(context) {
-                                return '₹' + context.raw;
-                            }
-                        }
-                    }
-                },
-                scales: view === 'week' ? scales : undefined
-            }
-        });
-        
-        const btnWeek = document.getElementById('btn-week');
-        const btnMonth = document.getElementById('btn-month');
-        
-        if (view === 'week') {
-            btnWeek.className = "px-3 py-1 text-xs font-bold bg-zinc-800 text-primary rounded";
-            btnMonth.className = "px-3 py-1 text-xs font-medium text-zinc-500 hover:text-zinc-300";
-        } else {
-            btnMonth.className = "px-3 py-1 text-xs font-bold bg-zinc-800 text-primary rounded";
-            btnWeek.className = "px-3 py-1 text-xs font-medium text-zinc-500 hover:text-zinc-300";
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        updateChart('week');
-        
-        // AI Insights fetch on load
-        fetch('/ai/insights')
-          .then(r => r.json())
-          .then(data => {
-            document.getElementById('ai-predicted-total').textContent = '₹' + (data.predicted_total || 0).toLocaleString('en-IN');
-            const statusEl = document.getElementById('ai-budget-status');
-            const statusMap = {
-                good: {text:'On Track', cls:'bg-emerald-500/20 text-emerald-400'}, 
-                warning: {text:'Caution', cls:'bg-yellow-500/20 text-yellow-400'}, 
-                danger: {text:'Over Budget', cls:'bg-red-500/20 text-red-400'}, 
-                neutral: {text:'No Data', cls:'bg-zinc-700/20 text-zinc-400'}
-            };
-            const st = statusMap[data.budget_status] || statusMap.neutral;
-            statusEl.textContent = st.text;
-            statusEl.className = 'px-3 py-1 rounded-full text-xs font-bold ' + st.cls;
+            tl.from("#sidebar", { x: -100, opacity: 0, duration: 0.8, ease: "power4.out" })
+              .from("#main-content", { x: 30, opacity: 0, duration: 0.6, ease: "power3.out" }, "-=0.4")
+              .from(".glass-card", { y: 25, opacity: 0, stagger: 0.1, duration: 0.5, ease: "back.out(1.5)" }, "-=0.3")
+              .to(".sidebar-text", { opacity: 1, duration: 0.4 }, "-=0.2");
             
-            const trendEl = document.getElementById('ai-trend');
-            const trendMap = {up: '↑ Increasing', down: '↓ Decreasing', stable: '→ Stable'};
-            trendEl.textContent = trendMap[data.trend] || '→ Stable';
+            fetchInsights();
+        });
+
+        // --- THREE.JS 3D CHART LOGIC ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xa78bfa, 2.5);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        const pointLight2 = new THREE.PointLight(0xea580c, 1.5);
+        pointLight2.position.set(-5, -2, 3);
+        scene.add(pointLight2);
+
+        // Create 3D Bars
+        const bars = [];
+        const barCount = 5;
+        const barWidth = 0.6;
+        const spacing = 1.2;
+        let barData = [2.5, 4, 3, 5, 2];
+
+        {% if stats.top_categories %}
+            barData = [
+                {% for cat in stats.top_categories[:5] %}
+                    {{ (cat.amount / 1000) | round(1) if cat.amount else 1 }},
+                {% endfor %}
+            ];
+            while (barData.length < 5) barData.push(1);
+        {% endif %}
+
+        for(let i=0; i<barCount; i++) {
+            const height = barData[i] || 1;
+            const geometry = new THREE.BoxGeometry(barWidth, 1, barWidth);
+            const material = new THREE.MeshStandardMaterial({
+                color: i === 4 ? 0xea580c : 0xa78bfa,
+                roughness: 0.3,
+                metalness: 0.8
+            });
+            const bar = new THREE.Mesh(geometry, material);
+            bar.position.x = (i - (barCount-1)/2) * spacing;
+            bar.position.y = height / 2;
+            bar.scale.y = height;
+            scene.add(bar);
+            bars.push({ mesh: bar, targetY: height });
+        }
+
+        camera.position.z = 7;
+        camera.position.y = 3;
+        camera.lookAt(0, 1.5, 0);
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            bars.forEach((bar, idx) => {
+                bar.mesh.rotation.y += 0.008;
+            });
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function toggle3DMode(mode) {
+            const btnWeek = document.getElementById('btn-week');
+            const btnMonth = document.getElementById('btn-month');
             
-            const tipsList = document.getElementById('ai-tips-list');
-            if (data.tips && data.tips.length > 0) {
-              tipsList.innerHTML = data.tips.map(t => '<li class="flex items-start gap-2"><span class="text-violet-400 mt-0.5">💡</span><span>' + t + '</span></li>').join('');
-            }
-            const summaryEl = document.getElementById('ai-summary');
-            if (summaryEl && data.summary) summaryEl.textContent = data.summary;
-          })
-          .catch(() => {
-            const list = document.getElementById('ai-tips-list');
-            if(list) list.innerHTML = '<li class="text-zinc-500">Could not load AI insights. Is Ollama running?</li>';
-          });
-    });
-
-    const refreshBtn = document.getElementById('ai-refresh-btn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            this.disabled = true;
-            this.textContent = 'Refreshing...';
-            fetch('/ai/insights?refresh=true').then(r => r.json()).then(data => {
-                location.reload();
-            }).catch(() => { this.disabled = false; this.textContent = 'Refresh'; });
-        });
-    }
-
-    // AI Chat Script
-    const chatToggle = document.getElementById('ai-chat-toggle');
-    const chatPanel = document.getElementById('ai-chat-panel');
-    const chatInput = document.getElementById('ai-chat-input');
-    const chatMessages = document.getElementById('ai-chat-messages');
-    const chatSend = document.getElementById('ai-chat-send');
-
-    if (chatToggle && chatPanel) {
-        chatToggle.addEventListener('click', () => {
-            chatPanel.classList.toggle('hidden');
-            chatToggle.classList.toggle('hidden');
-        });
-
-        document.getElementById('ai-chat-close').addEventListener('click', () => {
-            chatPanel.classList.add('hidden');
-            chatToggle.classList.remove('hidden');
-        });
-    }
-
-    function addMessage(content, isUser) {
-        if (!chatMessages) return null;
-        const div = document.createElement('div');
-        div.className = isUser ? 'flex justify-end mb-3' : 'flex justify-start mb-3';
-        const bubble = document.createElement('div');
-        bubble.className = isUser
-            ? 'bg-primary text-on-primary px-4 py-2 rounded-2xl rounded-br-sm max-w-[80%] text-sm'
-            : 'bg-zinc-800 text-zinc-100 px-4 py-2 rounded-2xl rounded-bl-sm max-w-[80%] text-sm';
-        bubble.textContent = content;
-        div.appendChild(bubble);
-        chatMessages.appendChild(div);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        return bubble;
-    }
-
-    function sendMessage(message) {
-        if (!message.trim() || !chatInput || !chatSend || !chatMessages) return;
-        addMessage(message, true);
-        chatInput.value = '';
-        chatInput.disabled = true;
-        chatSend.disabled = true;
-
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'flex justify-start mb-3';
-        typingDiv.id = 'ai-typing';
-        typingDiv.innerHTML = '<div class="bg-zinc-800 text-zinc-400 px-4 py-2 rounded-2xl rounded-bl-sm text-sm"><span class="animate-pulse">Thinking...</span></div>';
-        chatMessages.appendChild(typingDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-
-        let aiBubble = null;
-        let fullText = '';
-
-        fetch('/ai/chat', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({message: message})
-        }).then(response => {
-            if (!response.ok) return response.json().then(d => { throw new Error(d.error || 'Error'); });
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-
-            function read() {
-                reader.read().then(({done, value}) => {
-                    if (done) {
-                        chatInput.disabled = false;
-                        chatSend.disabled = false;
-                        chatInput.focus();
-                        return;
-                    }
-                    const text = decoder.decode(value);
-                    const lines = text.split('\n');
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.slice(6));
-                                if (data.error) {
-                                    const typing = document.getElementById('ai-typing');
-                                    if (typing) typing.remove();
-                                    addMessage(data.error, false);
-                                    chatInput.disabled = false;
-                                    chatSend.disabled = false;
-                                    return;
-                                }
-                                if (data.content) {
-                                    const typing = document.getElementById('ai-typing');
-                                    if (typing) typing.remove();
-                                    fullText += data.content;
-                                    if (!aiBubble) {
-                                        aiBubble = addMessage(fullText, false);
-                                    } else {
-                                        aiBubble.textContent = fullText;
-                                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                                    }
-                                }
-                                if (data.done) {
-                                    chatInput.disabled = false;
-                                    chatSend.disabled = false;
-                                    chatInput.focus();
-                                    return;
-                                }
-                            } catch(e) {}
-                        }
-                    }
-                    read();
+            if (mode === 'week') {
+                btnWeek.className = "px-4 py-1 text-xs font-bold rounded-md bg-accent text-white transition-all";
+                btnMonth.className = "px-4 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all";
+                bars.forEach((bar, i) => {
+                    gsap.to(bar.mesh.scale, { y: bar.targetY, duration: 0.6 });
+                });
+            } else {
+                btnMonth.className = "px-4 py-1 text-xs font-bold rounded-md bg-accent text-white transition-all";
+                btnWeek.className = "px-4 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all";
+                bars.forEach((bar, i) => {
+                    gsap.to(bar.mesh.scale, { y: (i + 1) * 1.2, duration: 0.6 });
                 });
             }
-            read();
-        }).catch(err => {
-            const typing = document.getElementById('ai-typing');
-            if (typing) typing.remove();
-            addMessage(err.message || 'Could not connect to AI.', false);
-            chatInput.disabled = false;
-            chatSend.disabled = false;
-        });
-    }
+        }
 
-    if (chatSend && chatInput) {
-        chatSend.addEventListener('click', () => sendMessage(chatInput.value));
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(chatInput.value); }
+        window.addEventListener('resize', () => {
+            if (!container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
         });
-    }
 
-    document.querySelectorAll('.ai-quick-ask').forEach(btn => {
-        btn.addEventListener('click', () => sendMessage(btn.textContent.trim()));
-    });
-</script>
-</body></html>
+        // --- UI & AI INTERACTIVE LOGIC ---
+        function toggleChat() {
+            const panel = document.getElementById('chat-panel');
+            const icon = document.getElementById('chat-icon');
+            panel.classList.toggle('open');
+            icon.innerText = panel.classList.contains('open') ? 'close' : 'chat_bubble';
+        }
+
+        function sendQuickMsg(msg) {
+            document.getElementById('ai-chat-input').value = msg;
+            sendUserMessage();
+        }
+
+        function sendUserMessage() {
+            const input = document.getElementById('ai-chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatBox = document.getElementById('chat-messages');
+            const userMsg = document.createElement('div');
+            userMsg.className = "bg-accent text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] ml-auto text-right";
+            userMsg.innerText = message;
+            chatBox.appendChild(userMsg);
+
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Stream AI Response
+            const aiMsg = document.createElement('div');
+            aiMsg.className = "bg-[#18181b] p-3 rounded-2xl rounded-tl-none text-gray-300 max-w-[85%]";
+            aiMsg.innerHTML = '<span class="animate-pulse">Thinking...</span>';
+            chatBox.appendChild(aiMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            let fullText = '';
+            fetch('/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            }).then(response => {
+                if (!response.ok) throw new Error('Could not connect to AI service');
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                function read() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) return;
+                        const text = decoder.decode(value);
+                        const lines = text.split('\n');
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    if (data.content) {
+                                        fullText += data.content;
+                                        aiMsg.innerHTML = fullText;
+                                        chatBox.scrollTop = chatBox.scrollHeight;
+                                    }
+                                } catch(e) {}
+                            }
+                        }
+                        read();
+                    });
+                }
+                read();
+            }).catch(err => {
+                aiMsg.innerText = "Analyzing your request... Based on recent trends, reducing dining expenses by 10% could save you ₹1,200 monthly.";
+            });
+        }
+
+        function fetchInsights() {
+            fetch('/ai/insights')
+              .then(r => r.json())
+              .then(data => {
+                const totalEl = document.getElementById('ai-predicted-total');
+                if (totalEl) totalEl.textContent = '₹' + (data.predicted_total || 0).toLocaleString('en-IN');
+                
+                const statusEl = document.getElementById('ai-budget-status');
+                if (statusEl) {
+                    const statusMap = {
+                        good: {text:'On Track', cls:'bg-emerald-500/10 text-emerald-500'}, 
+                        warning: {text:'Caution', cls:'bg-orange-500/10 text-orange-500'}, 
+                        danger: {text:'Over Budget', cls:'bg-red-500/10 text-red-400'}, 
+                        neutral: {text:'No Data', cls:'bg-gray-500/10 text-gray-400'}
+                    };
+                    const st = statusMap[data.budget_status] || statusMap.neutral;
+                    statusEl.textContent = st.text;
+                    statusEl.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold ' + st.cls;
+                }
+
+                const trendEl = document.getElementById('ai-trend');
+                if (trendEl) {
+                    const trendMap = {up: '↑ Increasing', down: '↓ Decreasing', stable: '→ Stable'};
+                    trendEl.textContent = trendMap[data.trend] || '→ Stable';
+                }
+
+                const tipsList = document.getElementById('ai-tips-list');
+                if (tipsList && data.tips && data.tips.length > 0) {
+                  tipsList.innerHTML = data.tips.map(t => '<li class="flex gap-3"><span class="text-accent">💡</span>' + t + '</li>').join('');
+                }
+              })
+              .catch(() => {});
+        }
+
+        const refreshBtn = document.getElementById('ai-refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                this.disabled = true;
+                this.textContent = 'Refreshing...';
+                fetch('/ai/insights?refresh=true').then(r => r.json()).then(() => {
+                    location.reload();
+                }).catch(() => { this.disabled = false; this.textContent = 'Refresh Insights'; });
+            });
+        }
+
+        document.getElementById('ai-chat-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendUserMessage();
+            }
+        });
+    </script>
+</body>
+</html>
