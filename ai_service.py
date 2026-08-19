@@ -18,8 +18,18 @@ RATE_LIMIT_SECONDS = 3  # Reduced to 3 seconds for better UX
 
 
 def _check_rate_limit(user_id):
-    """Returns True if rate limited, False if OK."""
+    """Returns True if rate limited, False if OK. Includes bounded cache check."""
     now = time.time()
+
+    # Boundary check to prevent DoS via unbounded memory growth
+    MAX_CACHE_SIZE = 1000
+    if len(_rate_limit_cache) > MAX_CACHE_SIZE:
+        expired_keys = [k for k, v in _rate_limit_cache.items() if now - v > RATE_LIMIT_SECONDS]
+        for k in expired_keys:
+            del _rate_limit_cache[k]
+        if len(_rate_limit_cache) > MAX_CACHE_SIZE:
+            _rate_limit_cache.clear()
+
     key = f"ai_rate_{user_id}"
     last_time = _rate_limit_cache.get(key, 0)
     if now - last_time < RATE_LIMIT_SECONDS:

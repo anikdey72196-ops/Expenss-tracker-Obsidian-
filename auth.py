@@ -3,6 +3,8 @@ from imports import (
     generate_password_hash, check_password_hash,
     create_access_token, User, db
 )
+import time
+
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -50,10 +52,52 @@ def signup():
     
     return jsonify({"message": "User created successfully"}), 201
 
+
+# In-memory dictionary for bounded rate limiting
+_api_login_rate_limit_cache = {}
+
+def _check_api_login_rate_limit(ip_address):
+    """
+    Bounded rate limiter: max 5 attempts per 5 minutes.
+    Clears cache if it grows too large to prevent DoS via memory leak.
+    """
+    MAX_ATTEMPTS = 5
+    WINDOW_SECONDS = 300
+    MAX_CACHE_SIZE = 1000
+
+    now = time.time()
+
+    # Prune cache to prevent memory leak DoS
+    if len(_api_login_rate_limit_cache) > MAX_CACHE_SIZE:
+        # Remove expired entries
+        expired_keys = [k for k, v in _api_login_rate_limit_cache.items() if now - v['start_time'] > WINDOW_SECONDS]
+        for k in expired_keys:
+            del _api_login_rate_limit_cache[k]
+
+        # If still too large after pruning, clear it aggressively
+        if len(_api_login_rate_limit_cache) > MAX_CACHE_SIZE:
+            _api_login_rate_limit_cache.clear()
+
+    record = _api_login_rate_limit_cache.get(ip_address)
+    if not record or now - record['start_time'] > WINDOW_SECONDS:
+        _api_login_rate_limit_cache[ip_address] = {'count': 1, 'start_time': now}
+        return False
+
+    if record['count'] >= MAX_ATTEMPTS:
+        return True
+
+    record['count'] += 1
+    return False
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """Authenticate and generate JWT."""
+    ip_address = request.remote_addr or 'unknown'
+    if _check_api_login_rate_limit(ip_address):
+        return jsonify({"error": "Too many login attempts. Please try again later."}), 429
+
     data = request.get_json()
+
     
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({"error": "Username and password are required"}), 400
