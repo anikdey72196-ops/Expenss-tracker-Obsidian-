@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obsidian | Modern Expense Tracker</title>
-    <!-- Three.js & GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <!-- Google Fonts & Material Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <style>
@@ -23,11 +21,9 @@
             --text: #fafafa;
             --text-variant: #a1a1aa;
         }
-
         * {
             box-sizing: border-box;
         }
-
         body, html {
             margin: 0;
             padding: 0;
@@ -38,7 +34,6 @@
             color: var(--text);
             overflow-x: hidden;
         }
-
         /* Three.js Canvas Container */
         #canvas-container {
             position: fixed;
@@ -49,7 +44,6 @@
             z-index: 0;
             pointer-events: none;
         }
-
         /* Navbar */
         nav {
             display: flex;
@@ -65,7 +59,6 @@
             backdrop-filter: blur(12px);
             border-b: 1px solid var(--glass-border);
         }
-
         .logo {
             font-weight: 800;
             font-size: 1.4rem;
@@ -76,17 +69,14 @@
             gap: 0.5rem;
             text-decoration: none;
         }
-
         .logo span.icon {
             color: var(--primary);
         }
-
         .nav-links {
             display: flex;
             align-items: center;
             gap: 1.5rem;
         }
-
         .nav-links a {
             color: var(--text-variant);
             text-decoration: none;
@@ -94,15 +84,12 @@
             font-weight: 500;
             transition: all 0.3s ease;
         }
-
         .nav-links a:hover {
             color: var(--text);
         }
-
         .btn-signin {
             color: var(--text-variant) !important;
         }
-
         .btn-get-started {
             background: var(--primary) !important;
             color: #0a0012 !important;
@@ -111,12 +98,10 @@
             font-weight: 600 !important;
             transition: all 0.2s ease !important;
         }
-
         .btn-get-started:hover {
             opacity: 0.9;
             transform: scale(1.02);
         }
-
         /* Hero Section */
         section.hero {
             position: relative;
@@ -127,11 +112,9 @@
             padding: 0 8%;
             z-index: 10;
         }
-
         .hero-content {
             max-width: 650px;
         }
-
         .badge {
             display: inline-flex;
             align-items: center;
@@ -145,7 +128,6 @@
             font-weight: 600;
             margin-bottom: 1.5rem;
         }
-
         .badge-dot {
             width: 8px;
             height: 8px;
@@ -153,7 +135,6 @@
             border-radius: 50%;
             box-shadow: 0 0 10px var(--primary);
         }
-
         h1 {
             font-size: 4.5rem;
             font-weight: 800;
@@ -162,11 +143,9 @@
             letter-spacing: -2px;
             color: var(--text);
         }
-
         h1 span.highlight {
             color: var(--primary);
         }
-
         p.hero-sub {
             font-size: 1.2rem;
             line-height: 1.6;
@@ -174,7 +153,6 @@
             margin-bottom: 2.2rem;
             max-width: 540px;
         }
-
         .cta-button {
             padding: 1rem 2.5rem;
             background: var(--primary);
@@ -187,42 +165,35 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             box-shadow: 0 0 40px -10px var(--primary-glow);
         }
-
         .cta-button:hover {
             transform: scale(1.02);
             box-shadow: 0 0 50px -5px var(--primary-glow);
         }
-
         /* Features Section */
         .features-section {
             position: relative;
             z-index: 10;
             padding: 100px 8% 120px 8%;
         }
-
         .features-header {
             text-align: center;
             margin-bottom: 60px;
         }
-
         .features-header h2 {
             font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 0.8rem;
             letter-spacing: -1px;
         }
-
         .features-header p {
             color: var(--text-variant);
             font-size: 1.1rem;
         }
-
         .features {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
         }
-
         .card {
             background: var(--surface-container);
             padding: 2.5rem;
@@ -231,12 +202,10 @@
             backdrop-filter: blur(16px);
             transition: all 0.3s ease;
         }
-
         .card:hover {
             border-color: rgba(167, 139, 250, 0.5);
             transform: translateY(-4px);
         }
-
         .card-icon {
             width: 48px;
             height: 48px;
@@ -246,11 +215,9 @@
             justify-content: center;
             margin-bottom: 1.5rem;
         }
-
         .card-icon.purple { background: rgba(124, 58, 237, 0.2); color: var(--primary); }
         .card-icon.green { background: rgba(6, 95, 70, 0.3); color: #34d399; }
         .card-icon.red { background: rgba(59, 17, 17, 0.4); color: #ef4444; }
-
         .card h3 {
             color: var(--text);
             font-size: 1.3rem;
@@ -258,14 +225,12 @@
             margin-bottom: 0.8rem;
             font-weight: 700;
         }
-
         .card p {
             color: var(--text-variant);
             line-height: 1.6;
             margin: 0;
             font-size: 0.95rem;
         }
-
         /* Testimonial Section */
         .testimonial-section {
             position: relative;
@@ -275,19 +240,16 @@
             text-align: center;
             border-y: 1px solid var(--glass-border);
         }
-
         .testimonial-container {
             max-width: 800px;
             margin: 0 auto;
         }
-
         .quote-icon {
             font-size: 3rem !important;
             color: var(--primary);
             opacity: 0.5;
             margin-bottom: 1.5rem;
         }
-
         blockquote {
             font-size: 1.6rem;
             font-weight: 500;
@@ -296,14 +258,12 @@
             margin: 0 0 2rem 0;
             color: var(--text);
         }
-
         .author {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 1rem;
         }
-
         .author-img {
             width: 48px;
             height: 48px;
@@ -312,28 +272,23 @@
             border: 1px solid var(--glass-border);
             filter: grayscale(100%);
         }
-
         .author-info {
             text-align: left;
         }
-
         .author-name {
             font-weight: 700;
             color: var(--text);
         }
-
         .author-role {
             font-size: 0.85rem;
             color: var(--text-variant);
         }
-
         /* CTA Section */
         .cta-section {
             position: relative;
             z-index: 10;
             padding: 100px 8%;
         }
-
         .cta-box {
             max-width: 900px;
             margin: 0 auto;
@@ -343,14 +298,12 @@
             padding: 4rem 2rem;
             text-align: center;
         }
-
         .cta-box h2 {
             font-size: 3rem;
             font-weight: 800;
             letter-spacing: -1px;
             margin-bottom: 1rem;
         }
-
         .cta-box p {
             color: var(--text-variant);
             font-size: 1.1rem;
@@ -358,7 +311,6 @@
             margin: 0 auto 2.5rem auto;
             line-height: 1.6;
         }
-
         /* Footer */
         footer {
             position: relative;
@@ -367,7 +319,6 @@
             padding: 3rem 8%;
             background: #050507;
         }
-
         .footer-content {
             max-width: 1200px;
             margin: 0 auto;
@@ -375,19 +326,16 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .footer-brand {
             font-size: 1.2rem;
             font-weight: 700;
             color: var(--text);
         }
-
         .footer-copy {
             color: #71717a;
             font-size: 0.85rem;
             margin-top: 0.4rem;
         }
-
         /* Responsive */
         @media (max-width: 768px) {
             h1 { font-size: 3.2rem; }
@@ -399,11 +347,7 @@
     </style>
 </head>
 <body>
-
-    <!-- 3D Canvas -->
     <div id="canvas-container"></div>
-
-    <!-- Navigation -->
     <nav>
         <a href="{{ url_for('index') }}" class="logo">
             <span class="material-symbols-outlined icon" style="font-variation-settings: 'FILL' 1;">layers</span>
@@ -414,8 +358,6 @@
             <a href="{{ url_for('register') }}" class="btn-get-started">Get Started</a>
         </div>
     </nav>
-
-    <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
             <div class="badge">
@@ -429,8 +371,6 @@
             <a href="{{ url_for('register') }}" class="cta-button">Get Started for Free</a>
         </div>
     </section>
-
-    <!-- Features Section -->
     <section class="features-section">
         <div class="features-header">
             <h2>Engineered for Precision</h2>
@@ -460,8 +400,6 @@
             </div>
         </div>
     </section>
-
-    <!-- Testimonial Section -->
     <section class="testimonial-section">
         <div class="testimonial-container">
             <span class="material-symbols-outlined quote-icon" style="font-variation-settings: 'FILL' 1;">format_quote</span>
@@ -477,8 +415,6 @@
             </div>
         </div>
     </section>
-
-    <!-- CTA Section -->
     <section class="cta-section">
         <div class="cta-box">
             <h2>Join the Dark Side of Finance</h2>
@@ -486,8 +422,6 @@
             <a href="{{ url_for('register') }}" class="cta-button">Sign Up Now</a>
         </div>
     </section>
-
-    <!-- Footer -->
     <footer>
         <div class="footer-content">
             <div>
@@ -496,37 +430,29 @@
             </div>
         </div>
     </footer>
-
     <script>
         // --- THREE.JS SCENE SETUP ---
         let scene, camera, renderer, bars = [];
-
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             document.getElementById('canvas-container').appendChild(renderer.domElement);
-
             // Lighting
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
-
             const violetLight = new THREE.PointLight(0xa78bfa, 2.5, 50);
             violetLight.position.set(5, 5, 5);
             scene.add(violetLight);
-
             const emeraldLight = new THREE.PointLight(0x34d399, 2.0, 50);
             emeraldLight.position.set(-5, 2, 2);
             scene.add(emeraldLight);
-
             // Create 3D Bar Chart
             const geometry = new THREE.BoxGeometry(0.6, 1, 0.6);
             const barCount = 10;
             const spacing = 0.85;
-
             for (let i = 0; i < barCount; i++) {
                 const material = new THREE.MeshStandardMaterial({
                     color: 0xa78bfa,
@@ -534,18 +460,14 @@
                     metalness: 0.75
                 });
                 const bar = new THREE.Mesh(geometry, material);
-
                 // Position bars in a row
                 bar.position.x = (i - barCount / 2) * spacing;
-
                 // Initial scale
                 bar.scale.y = Math.random() * 3 + 1;
                 bar.position.y = bar.scale.y / 2;
-
                 scene.add(bar);
                 bars.push(bar);
             }
-
             // Position Camera (shifted right to balance left-aligned hero text)
             if (window.innerWidth > 768) {
                 camera.position.x = 2.2;
@@ -557,46 +479,36 @@
                 camera.position.y = 1;
             }
             camera.lookAt(0, 1, 0);
-
             animate();
         }
-
         // --- ANIMATION LOOP ---
         function animate() {
             requestAnimationFrame(animate);
-
             const time = Date.now() * 0.0015;
-
             // Subtle floating rotation
             scene.rotation.y = Math.sin(time * 0.3) * 0.2;
             scene.rotation.x = Math.cos(time * 0.2) * 0.08;
-
             // Animate bar heights
             bars.forEach((bar, index) => {
                 const scale = Math.sin(time * 1.5 + index * 0.6) * 1.2 + 2.4;
                 bar.scale.y = scale;
                 bar.position.y = scale / 2;
-
                 // Dynamic purple/emerald HSL tint
                 const hue = 0.7 + (scale * 0.03); // violet/purple tint
                 bar.material.color.setHSL(hue, 0.7, 0.55);
             });
-
             renderer.render(scene, camera);
         }
-
         // --- INTERACTIVITY & RESPONSIVENESS ---
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
         // Mouse Parallax
         window.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth) - 0.5;
             const y = (e.clientY / window.innerHeight) - 0.5;
-
             gsap.to(scene.rotation, {
                 y: x * 0.4,
                 x: y * 0.2,
@@ -604,10 +516,8 @@
                 ease: "power2.out"
             });
         });
-
         // Initialize Scene
         init();
-
         // GSAP Entrance Animations
         gsap.from(".badge", { opacity: 0, y: -20, duration: 1, delay: 0.2 });
         gsap.from("h1", { opacity: 0, y: 40, duration: 1.2, delay: 0.4, ease: "power3.out" });

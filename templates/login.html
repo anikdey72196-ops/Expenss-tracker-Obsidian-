@@ -19,14 +19,12 @@
             --error: #ef4444;
             --success: #10b981;
         }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-
         body {
             height: 100vh;
             display: flex;
@@ -40,7 +38,6 @@
             background-size: 32px 32px, 100% 100%;
             color: var(--text-heading);
         }
-
         /* Ambient Glow Blobs */
         .blob {
             position: absolute;
@@ -54,7 +51,6 @@
             left: 15%;
             animation: float 14s infinite alternate ease-in-out;
         }
-
         .blob-2 {
             background: rgba(2, 132, 199, 0.12);
             right: 15%;
@@ -63,12 +59,10 @@
             height: 400px;
             animation: float 18s infinite alternate-reverse ease-in-out;
         }
-
         @keyframes float {
             from { transform: translate(-30px, -30px); }
             to { transform: translate(30px, 30px); }
         }
-
         /* Centered Container & Brand Header */
         .login-container {
             width: 100%;
@@ -76,12 +70,10 @@
             padding: 0 20px;
             z-index: 10;
         }
-
         .brand-header {
             text-align: center;
             margin-bottom: 24px;
         }
-
         .brand-logo {
             display: inline-flex;
             align-items: center;
@@ -93,16 +85,13 @@
             letter-spacing: -0.5px;
             transition: color 0.2s;
         }
-
         .brand-logo:hover {
             color: var(--accent-orange);
         }
-
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
             color: var(--accent-orange);
         }
-
         /* 3D Glass Login Card */
         .login-card {
             width: 100%;
@@ -115,7 +104,6 @@
             transition: transform 0.12s ease-out;
             transform-style: preserve-3d;
         }
-
         h2 {
             color: var(--text-heading);
             font-size: 1.75rem;
@@ -123,13 +111,11 @@
             margin-bottom: 6px;
             letter-spacing: -0.5px;
         }
-
         .subtitle {
             color: var(--text-muted);
             margin-bottom: 24px;
             font-size: 0.9rem;
         }
-
         /* Flash Message Badges */
         .flash-message {
             padding: 10px 14px;
@@ -138,32 +124,27 @@
             margin-bottom: 20px;
             text-align: left;
         }
-
         .flash-danger {
             background: rgba(239, 68, 68, 0.15);
             border: 1px solid rgba(239, 68, 68, 0.3);
             color: #fca5a5;
         }
-
         .flash-success {
             background: rgba(16, 185, 129, 0.15);
             border: 1px solid rgba(16, 185, 129, 0.3);
             color: #6ee7b7;
         }
-
         .flash-info {
             background: rgba(234, 88, 12, 0.15);
             border: 1px solid rgba(234, 88, 12, 0.3);
             color: #fdba74;
         }
-
         /* Form Inputs */
         .input-group {
             position: relative;
             margin-bottom: 20px;
             text-align: left;
         }
-
         .input-group label {
             display: block;
             color: var(--text-muted);
@@ -172,12 +153,10 @@
             margin-bottom: 8px;
             margin-left: 4px;
         }
-
         .input-wrap {
             position: relative;
             transform: translateZ(15px);
         }
-
         .input-wrap input {
             width: 100%;
             padding: 12px 16px;
@@ -189,23 +168,19 @@
             font-size: 0.95rem;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-
         .input-wrap input::placeholder {
             color: #64748b;
         }
-
         .input-wrap input:focus {
             border-color: var(--accent-orange);
             box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.25);
         }
-
         .field-error {
             color: var(--error);
             font-size: 0.75rem;
             margin-top: 5px;
             margin-left: 4px;
         }
-
         /* Action CTA Button */
         .submit-btn {
             width: 100%;
@@ -222,18 +197,15 @@
             transform: translateZ(20px);
             box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
         }
-
         .submit-btn:hover {
             background: var(--accent-orange-hover);
             transform: translateZ(22px);
             box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
         }
-
         .submit-btn:active {
             transform: translateZ(15px);
             opacity: 0.95;
         }
-
         /* Footer Links */
         .footer-links {
             margin-top: 24px;
@@ -241,22 +213,18 @@
             justify-content: space-between;
             font-size: 0.85rem;
         }
-
         .footer-links a {
             color: var(--text-muted);
             text-decoration: none;
             transition: color 0.2s;
         }
-
         .footer-links a:hover {
             color: var(--accent-orange);
         }
-
         /* Shake Error Animation */
         .shake {
             animation: shake 0.4s ease-in-out;
         }
-
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-8px); }
@@ -265,26 +233,18 @@
     </style>
 </head>
 <body>
-
-    <!-- Ambient Glow Blobs -->
     <div class="blob"></div>
     <div class="blob blob-2"></div>
-
     <div class="login-container">
-        <!-- Logo Header -->
         <div class="brand-header">
             <a href="{{ url_for('index') }}" class="brand-logo">
                 <span class="material-symbols-outlined">layers</span>
                 Obsidian
             </a>
         </div>
-
-        <!-- 3D Glass Login Card -->
         <div class="login-card" id="card">
             <h2>Welcome Back</h2>
             <p class="subtitle">Please enter your details</p>
-
-            <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -295,11 +255,8 @@
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-
             <form method="POST" action="{{ url_for('login') }}" id="loginForm">
                 {{ form.hidden_tag() }}
-
-                <!-- Username Field -->
                 <div class="input-group">
                     <div class="input-wrap">
                         <label for="username">Username</label>
@@ -313,8 +270,6 @@
                         <p class="field-error">{{ error }}</p>
                     {% endfor %}
                 </div>
-
-                <!-- Password Field -->
                 <div class="input-group">
                     <div class="input-wrap">
                         <label for="password">Password</label>
@@ -328,42 +283,33 @@
                         <p class="field-error">{{ error }}</p>
                     {% endfor %}
                 </div>
-
-                <!-- Action CTA Button -->
                 {{ form.submit(
                     class="submit-btn",
                     id="loginBtn"
                 ) }}
             </form>
-
-            <!-- Footer Links -->
             <div class="footer-links">
                 <a href="{{ url_for('index') }}">← Back to Home</a>
                 <a href="{{ url_for('register') }}">Create Account</a>
             </div>
         </div>
     </div>
-
     <script>
         const card = document.getElementById('card');
         const body = document.querySelector('body');
-
         // Smooth 3D Tilt Effect
         body.addEventListener('mousemove', (e) => {
             let xAxis = (window.innerWidth / 2 - e.clientX) / 30;
             let yAxis = (window.innerHeight / 2 - e.clientY) / 30;
             card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
         });
-
         body.addEventListener('mouseleave', () => {
             card.style.transition = 'all 0.5s ease';
             card.style.transform = `rotateY(0deg) rotateX(0deg)`;
         });
-
         body.addEventListener('mouseenter', () => {
             card.style.transition = 'none';
         });
-
         // Trigger shake on error
         if (document.querySelector('.flash-danger') || document.querySelector('.field-error')) {
             card.classList.add('shake');

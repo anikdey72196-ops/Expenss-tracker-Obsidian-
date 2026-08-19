@@ -16,15 +16,16 @@ DB_NAME = os.environ.get('DB_NAME', 'expense_tracker')
 DB_PORT = os.environ.get('DB_PORT', '3306')
 
 is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV') is not None
+is_render = os.environ.get('RENDER') == 'true' or os.environ.get('RENDER_SERVICE_ID') is not None
 
 if os.environ.get('PYTEST_CURRENT_TEST'):
     db_uri = 'sqlite:///:memory:'
-elif os.environ.get('DATABASE_URL'):
+elif os.environ.get('DATABASE_URL') and 'dpg-xxx' not in os.environ.get('DATABASE_URL'):
     db_uri = os.environ.get('DATABASE_URL')
     if db_uri.startswith("postgres://"):
         db_uri = db_uri.replace("postgres://", "postgresql://", 1)
-elif is_vercel and os.environ.get('DB_HOST', 'localhost') in ('localhost', '127.0.0.1'):
-    # On Vercel without remote DB env vars, use SQLite in /tmp directory
+elif (is_vercel or is_render) and (os.environ.get('DB_HOST', 'localhost') in ('localhost', '127.0.0.1') or 'dpg-xxx' in os.environ.get('DATABASE_URL', '')):
+    # On Render/Vercel with default placeholder DB env vars, fallback cleanly to SQLite in /tmp
     db_uri = 'sqlite:////tmp/expense_tracker.db'
 else:
     db_uri = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'

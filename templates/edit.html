@@ -39,7 +39,6 @@
     </style>
 </head>
 <body class="bg-background text-on-surface antialiased min-h-screen">
-    <!-- Top Bar -->
     <header class="bg-zinc-950 border-b border-zinc-800 h-16 flex items-center px-8 sticky top-0 z-10">
         <div class="flex items-center gap-4 w-full max-w-3xl mx-auto">
             <a href="{{ url_for('home') }}" class="text-zinc-400 hover:text-zinc-100 transition-colors flex items-center gap-2">
@@ -48,9 +47,7 @@
             </a>
         </div>
     </header>
-
     <main class="max-w-3xl mx-auto px-6 py-12">
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -68,8 +65,6 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
-        <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
                 <span class="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center text-primary">
@@ -79,13 +74,9 @@
             </h1>
             <p class="text-on-surface-variant text-sm mt-2">Modify the details of your recorded expense.</p>
         </div>
-
-        <!-- Form Card -->
         <div class="bg-surface-container border border-outline-variant rounded-2xl p-8">
             <form method="POST" action="{{ url_for('edit_expense', id=expense.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-
-                <!-- Amount -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-on-surface-variant mb-2" for="amount">
                         Amount (₹)
@@ -99,8 +90,6 @@
                         />
                     </div>
                 </div>
-
-                <!-- Category -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-on-surface-variant mb-2" for="category">
                         Category
@@ -120,8 +109,6 @@
                         <option value="Other" {% if expense.category == 'Other' %}selected{% endif %}>📦 Other</option>
                     </select>
                 </div>
-
-                <!-- Date -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-on-surface-variant mb-2" for="date">
                         Date
@@ -131,8 +118,6 @@
                         class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     />
                 </div>
-
-                <!-- Description -->
                 <div class="mb-8">
                     <label class="block text-sm font-medium text-on-surface-variant mb-2" for="description">
                         Description
@@ -142,8 +127,6 @@
                         placeholder="What was this expense for?"
                     >{{ expense.description }}</textarea>
                 </div>
-
-                <!-- Actions -->
                 <div class="flex items-center gap-4">
                     <button type="submit"
                         class="flex-1 bg-primary text-on-primary font-bold py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2">
@@ -157,8 +140,6 @@
                 </div>
             </form>
         </div>
-
-        <!-- Danger Zone -->
         <div class="mt-8 bg-surface-container border border-red-500/20 rounded-2xl p-6">
             <div class="flex items-center justify-between">
                 <div>
