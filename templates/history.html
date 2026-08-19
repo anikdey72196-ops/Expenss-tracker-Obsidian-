@@ -38,9 +38,28 @@
     </script>
 
     <style>
+        :root {
+            --bg-dark: #090a0f;
+            --card-bg: #14151f;
+            --card-inner: #1c1d2b;
+            --border-color: #2a2b3d;
+            --text-heading: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-purple: #a78bfa;
+            --accent-orange: #ea580c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
         body {
-            background-color: #09090b;
-            color: #e4e4e7;
+            background-color: var(--bg-dark);
+            color: var(--text-heading);
+            min-height: 100vh;
             overflow-x: hidden;
         }
 
@@ -51,35 +70,32 @@
         ::-webkit-scrollbar-thumb:hover { background: #a78bfa; }
 
         .glass-card {
-            background: rgba(18, 18, 21, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid #27272a;
-            border-radius: 18px;
+            background: #14151f;
+            border: 1px solid #2a2b3d;
+            border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            transition: border-color 0.25s, transform 0.25s;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(167, 139, 250, 0.4);
         }
 
         .table-row-hover:hover {
-            background: rgba(167, 139, 250, 0.06);
+            background: rgba(167, 139, 250, 0.05);
             border-left: 3px solid #a78bfa;
         }
 
         #canvas-container {
             width: 100%;
-            height: 240px;
+            height: 250px;
             cursor: grab;
-            min-height: 200px;
-        }
-
-        .nav-link.active {
-            background: rgba(167, 139, 250, 0.12);
-            color: #a78bfa;
-            border-right: 3px solid #a78bfa;
+            min-height: 220px;
         }
 
         .pill-active {
             background: #a78bfa;
             color: #09090b;
-            font-weight: 700;
         }
 
         .material-symbols-outlined {
@@ -87,80 +103,78 @@
         }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden font-sans bg-[#09090b]">
+<body class="font-sans antialiased">
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-64 h-full bg-[#121215] border-r border-[#27272a] flex flex-col fixed left-0 top-0 z-50 justify-between">
+    <!-- Fixed Left Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-screen w-64 bg-[#10111a] border-r border-[#2a2b3d] z-50 flex flex-col justify-between p-5">
         <div>
-            <div class="p-6 flex items-center gap-3">
-                <a href="{{ url_for('index') }}" class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-                        <span class="material-symbols-outlined text-[#09090b] text-base font-bold">diamond</span>
-                    </div>
-                    <span class="text-xl font-bold tracking-tight text-white">Obsidian</span>
-                </a>
-            </div>
+            <!-- Brand Logo -->
+            <a href="{{ url_for('index') }}" class="flex items-center gap-3 px-2 py-3 mb-6 text-white text-xl font-bold tracking-tight hover:opacity-90 transition-opacity">
+                <div class="w-9 h-9 bg-gradient-to-br from-violet-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20">
+                    <span class="material-symbols-outlined text-white text-lg">diamond</span>
+                </div>
+                <span>Obsidian</span>
+            </a>
 
-            <nav class="flex-1 mt-2 space-y-1">
-                <a href="{{ url_for('home') }}" class="nav-link flex items-center px-6 py-3 text-zinc-400 hover:text-white transition-all gap-4 text-sm font-medium">
-                    <span class="material-symbols-outlined text-lg">dashboard</span> Dashboard
+            <!-- Navigation Links -->
+            <nav class="space-y-2">
+                <a href="{{ url_for('home') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+                    <span class="material-symbols-outlined text-slate-400">dashboard</span>
+                    <span>Dashboard</span>
                 </a>
-                <a href="{{ url_for('history') }}" class="nav-link active flex items-center px-6 py-3 text-white transition-all gap-4 text-sm font-semibold">
-                    <span class="material-symbols-outlined text-lg">receipt_long</span> Expense History
-                </a>
-                <a href="{{ url_for('addexpense') }}" class="nav-link flex items-center px-6 py-3 text-zinc-400 hover:text-white transition-all gap-4 text-sm font-medium">
-                    <span class="material-symbols-outlined text-lg">add_circle</span> Add Expense
+                <a href="{{ url_for('history') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 font-semibold transition-all">
+                    <span class="material-symbols-outlined text-violet-400">receipt_long</span>
+                    <span>Expense History</span>
                 </a>
             </nav>
         </div>
 
-        <div class="p-6 border-t border-[#27272a] flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-[#09090b] font-bold">
-                    {{ username[0]|upper if username else 'U' }}
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-sm font-semibold text-white">{{ username }}</span>
-                    <span class="text-xs text-zinc-500">Precision Member</span>
-                </div>
-            </div>
-            <a href="{{ url_for('logout') }}" class="text-zinc-500 hover:text-red-400 transition-colors" title="Logout">
-                <span class="material-symbols-outlined text-lg">logout</span>
+        <!-- Sidebar Bottom Actions -->
+        <div class="space-y-3">
+            <a href="{{ url_for('addexpense') }}" class="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-violet-600/25 active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-xl">add</span>
+                <span>Add Expense</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-red-400 transition-colors text-sm">
+                <span class="material-symbols-outlined">logout</span>
+                <span>Logout</span>
             </a>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
-    <main id="main-content" class="flex-1 ml-64 flex flex-col h-full overflow-y-auto bg-[#09090b]">
+    <!-- Main Content Area -->
+    <main id="main-content" class="ml-64 min-h-screen bg-[#090a0f] flex flex-col">
 
-        <!-- TOP HEADER -->
-        <header id="top-header" class="h-16 bg-[#121215]/90 backdrop-blur-md border-b border-[#27272a] px-8 flex items-center justify-between sticky top-0 z-40">
-            <form method="GET" action="{{ url_for('history') }}" class="relative w-96">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">search</span>
-                <input type="text" name="search" value="{{ search_query }}" placeholder="Search transactions..." class="w-full bg-[#18181b] border border-[#27272a] rounded-md py-1.5 pl-10 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-primary transition-all">
-                {% if filter_type %}<input type="hidden" name="filter" value="{{ filter_type }}">{% endif %}
-                {% if category_filter %}<input type="hidden" name="category" value="{{ category_filter }}">{% endif %}
-                {% if sort_order %}<input type="hidden" name="sort" value="{{ sort_order }}">{% endif %}
-            </form>
+        <!-- Top Header -->
+        <header id="top-header" class="h-20 border-b border-[#2a2b3d] bg-[#0d0e17]/90 backdrop-blur-md sticky top-0 z-40 px-8 flex items-center justify-between">
+            <div class="flex items-center flex-1 max-w-md">
+                <div class="relative w-full">
+                    <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                    <input type="text" id="header-search-input" placeholder="Search transactions..." class="w-full bg-[#181926] border border-[#2a2b3d] rounded-full py-2 pl-11 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors">
+                </div>
+            </div>
 
             <div class="flex items-center gap-6">
-                <button class="relative text-zinc-400 hover:text-white transition-colors">
-                    <span class="material-symbols-outlined">notifications</span>
-                    <span class="absolute top-0 right-0 w-2 h-2 bg-accent rounded-full"></span>
+                <button class="relative p-2 text-slate-400 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-xl">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full"></span>
                 </button>
-                <div class="h-8 w-[1px] bg-[#27272a]"></div>
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-medium text-zinc-300">{{ username }}</span>
-                    <div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary text-xs font-bold">
+
+                <div class="flex items-center gap-3 pl-6 border-l border-[#2a2b3d]">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-semibold text-white">{{ username }}</p>
+                        <p class="text-xs text-slate-400">Precision Member</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full border border-violet-500/40 bg-violet-500/20 flex items-center justify-center font-bold text-violet-300">
                         {{ username[0]|upper if username else 'U' }}
                     </div>
                 </div>
             </div>
         </header>
 
-        <div id="page-container" class="p-8 max-w-7xl mx-auto w-full space-y-8">
+        <div id="page-container" class="p-8 max-w-7xl mx-auto w-full space-y-8 flex-1">
 
-            <!-- Flash Messages Banner -->
+            <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -170,7 +184,7 @@
                             {% elif category == 'success' %}
                                 bg-emerald-500/10 border-emerald-500/30 text-emerald-400
                             {% else %}
-                                bg-primary/10 border-primary/30 text-primary
+                                bg-violet-500/10 border-violet-500/30 text-violet-300
                             {% endif %}">
                             <span>{{ message }}</span>
                         </div>
@@ -178,129 +192,147 @@
                 {% endif %}
             {% endwith %}
 
-            <!-- PAGE HEADER & ACTIONS -->
-            <div id="page-header" class="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+            <!-- Page Header & Action Buttons -->
+            <div id="page-header" class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-white tracking-tight">Expense History</h1>
-                    <p class="text-zinc-400 text-sm mt-1">Filter, analyze, and manage your transaction records</p>
+                    <h1 class="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+                        <span class="w-10 h-10 bg-violet-500/20 rounded-xl border border-violet-500/30 flex items-center justify-center text-violet-400">
+                            <span class="material-symbols-outlined">receipt_long</span>
+                        </span>
+                        Expense History
+                    </h1>
+                    <p class="text-slate-400 text-sm mt-1">Filter, analyze, and manage your transaction records</p>
                 </div>
                 <div class="flex gap-3">
-                    <a href="{{ url_for('addexpense') }}" class="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-orange-600 text-white rounded-xl transition-all text-sm font-bold shadow-lg shadow-orange-900/30 active:scale-95">
-                        <span class="material-symbols-outlined text-sm">add</span> Add Expense
+                    <a href="{{ url_for('addexpense') }}" class="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold shadow-lg shadow-orange-600/25 active:scale-95 transition-all text-sm">
+                        <span class="material-symbols-outlined text-sm">add</span>
+                        <span>New Expense</span>
                     </a>
                 </div>
             </div>
 
-            <!-- SUMMARY METRICS -->
+            <!-- Summary Metrics Cards Grid -->
             <div id="metrics-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="glass-card p-6">
-                    <p class="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Total Filtered Amount</p>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Total Filtered Spending</p>
                     <div class="flex items-center justify-between">
-                        <h3 class="text-3xl font-bold text-white font-mono">₹{{ stats.total_amount }}</h3>
-                        <span class="flex items-center text-emerald-400 text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
-                            <span class="material-symbols-outlined text-sm mr-1">check_circle</span> Active
+                        <h3 class="text-3xl font-extrabold text-violet-400">₹{{ stats.total_amount }}</h3>
+                        <span class="flex items-center text-emerald-400 text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                            <span class="material-symbols-outlined text-sm mr-1">trending_up</span> Active
                         </span>
                     </div>
                 </div>
                 <div class="glass-card p-6">
-                    <p class="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Total Transactions</p>
-                    <h3 class="text-3xl font-bold text-white font-mono">{{ stats.count }} <span class="text-zinc-400 text-sm font-normal">entries</span></h3>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Total Transactions</p>
+                    <h3 class="text-3xl font-extrabold text-white">{{ stats.count }} <span class="text-slate-500 text-base font-normal">entries</span></h3>
                 </div>
                 <div class="glass-card p-6">
-                    <p class="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Avg. Transaction</p>
-                    <h3 class="text-3xl font-bold text-white font-mono">₹{{ stats.avg_amount }} <span class="text-zinc-400 text-sm font-normal">/ txn</span></h3>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Avg. Transaction</p>
+                    <h3 class="text-3xl font-extrabold text-emerald-400">₹{{ stats.avg_amount }} <span class="text-slate-500 text-base font-normal">/ txn</span></h3>
                 </div>
             </div>
 
-            <!-- FILTER & 3D WIDGET SECTION -->
+            <!-- Filter & 3D Widget Section -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                <!-- ADVANCED FILTERS FORM -->
+                <!-- Advanced Filter Form -->
                 <div id="filter-panel" class="lg:col-span-8 glass-card p-6">
-                    <form method="GET" action="{{ url_for('history') }}" id="filter-form">
-                        <div class="flex items-center justify-between mb-6 pb-4 border-b border-[#27272a]">
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-primary">tune</span>
-                                <h2 class="text-lg font-semibold text-white">Advanced Filters</h2>
-                            </div>
-                            <a href="{{ url_for('history') }}" class="text-xs text-zinc-400 hover:text-primary transition-colors">Reset Filters</a>
-                        </div>
+                    <div class="flex items-center gap-2.5 mb-6 pb-4 border-b border-[#2a2b3d]">
+                        <span class="material-symbols-outlined text-violet-400">tune</span>
+                        <h2 class="text-lg font-bold text-white">Advanced Filters</h2>
+                    </div>
 
+                    <form method="GET" action="{{ url_for('history') }}" id="filter-form" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Search -->
                             <div class="space-y-2">
-                                <label class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Search Description</label>
+                                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Search Description</label>
                                 <div class="relative">
-                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">search</span>
-                                    <input type="text" name="search" value="{{ search_query }}" placeholder="e.g. Netflix Subscription" class="w-full bg-[#18181b] border border-[#27272a] rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-zinc-500 focus:border-primary outline-none transition-all">
+                                    <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+                                    <input type="text" name="search" value="{{ search_query }}" placeholder="e.g. Netflix, Rent, Grocery" class="w-full bg-[#1c1d2b] border border-[#2a2b3d] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:border-violet-500 outline-none transition-colors">
                                 </div>
                             </div>
 
                             <!-- Category -->
                             <div class="space-y-2">
-                                <label class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Category</label>
-                                <select name="category" onchange="this.form.submit()" class="w-full bg-[#18181b] border border-[#27272a] rounded-xl py-2 px-4 text-sm text-white focus:border-primary outline-none transition-all">
+                                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Category</label>
+                                <select name="category" class="w-full bg-[#1c1d2b] border border-[#2a2b3d] rounded-xl py-2.5 px-4 text-sm text-white focus:border-violet-500 outline-none cursor-pointer transition-colors">
                                     <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
                                     {% for cat in categories %}
-                                        <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                                    <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
 
-                            <!-- Date Range Pills -->
-                            <div class="md:col-span-2 space-y-3">
-                                <label class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Date Presets</label>
-                                <div class="flex flex-wrap gap-2">
-                                    <input type="hidden" name="filter" id="filter_type_input" value="{{ filter_type }}">
-                                    <button type="submit" onclick="document.getElementById('filter_type_input').value='all'" class="px-4 py-1.5 rounded-full text-xs font-medium transition-all {% if filter_type == 'all' or not filter_type %}pill-active{% else %}bg-[#18181b] text-zinc-400 border border-[#27272a] hover:border-primary{% endif %}">All Time</button>
-                                    <button type="submit" onclick="document.getElementById('filter_type_input').value='past_week'" class="px-4 py-1.5 rounded-full text-xs font-medium transition-all {% if filter_type == 'past_week' %}pill-active{% else %}bg-[#18181b] text-zinc-400 border border-[#27272a] hover:border-primary{% endif %}">Past Week</button>
-                                    <button type="submit" onclick="document.getElementById('filter_type_input').value='past_month'" class="px-4 py-1.5 rounded-full text-xs font-medium transition-all {% if filter_type == 'past_month' %}pill-active{% else %}bg-[#18181b] text-zinc-400 border border-[#27272a] hover:border-primary{% endif %}">Past Month</button>
-                                    <button type="submit" onclick="document.getElementById('filter_type_input').value='past_3_months'" class="px-4 py-1.5 rounded-full text-xs font-medium transition-all {% if filter_type == 'past_3_months' %}pill-active{% else %}bg-[#18181b] text-zinc-400 border border-[#27272a] hover:border-primary{% endif %}">Past 3 Months</button>
+                            <!-- Time Period Preset Selector -->
+                            <div class="md:col-span-2 space-y-2">
+                                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Time Period</label>
+                                <select name="filter" id="filter-select" onchange="toggleCustomDates(this.value)" class="w-full bg-[#1c1d2b] border border-[#2a2b3d] rounded-xl py-2.5 px-4 text-sm text-white focus:border-violet-500 outline-none cursor-pointer transition-colors">
+                                    <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Time</option>
+                                    <option value="past_week" {% if filter_type == 'past_week' %}selected{% endif %}>Past Week (7 Days)</option>
+                                    <option value="past_month" {% if filter_type == 'past_month' %}selected{% endif %}>Past Month (30 Days)</option>
+                                    <option value="past_3_months" {% if filter_type == 'past_3_months' %}selected{% endif %}>Past 3 Months</option>
+                                    <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Date Range</option>
+                                </select>
+                            </div>
+
+                            <!-- Custom Date Range Inputs -->
+                            <div id="custom-date-container" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[#2a2b3d] {% if filter_type != 'custom' %}hidden{% endif %}">
+                                <div class="space-y-2">
+                                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Start Date</label>
+                                    <input type="date" name="start_date" value="{{ start_date }}" class="w-full bg-[#1c1d2b] border border-[#2a2b3d] rounded-xl py-2.5 px-4 text-sm text-white outline-none focus:border-violet-500">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">End Date</label>
+                                    <input type="date" name="end_date" value="{{ end_date }}" class="w-full bg-[#1c1d2b] border border-[#2a2b3d] rounded-xl py-2.5 px-4 text-sm text-white outline-none focus:border-violet-500">
                                 </div>
                             </div>
 
-                            <!-- Custom Date -->
-                            <div class="space-y-2">
-                                <label class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Start Date</label>
-                                <input type="date" name="start_date" value="{{ start_date }}" onchange="document.getElementById('filter_type_input').value='custom'; this.form.submit()" class="w-full bg-[#18181b] border border-[#27272a] rounded-xl py-2 px-4 text-sm text-zinc-300 outline-none focus:border-primary">
+                            <!-- Sort Order -->
+                            <div class="md:col-span-2 space-y-2">
+                                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Sort Order</label>
+                                <select name="sort" class="w-full bg-[#1c1d2b] border border-[#2a2b3d] rounded-xl py-2.5 px-4 text-sm text-white focus:border-violet-500 outline-none cursor-pointer transition-colors">
+                                    <option value="date_desc" {% if sort_order == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
+                                    <option value="date_asc" {% if sort_order == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
+                                    <option value="amount_desc" {% if sort_order == 'amount_desc' %}selected{% endif %}>Amount (High to Low)</option>
+                                    <option value="amount_asc" {% if sort_order == 'amount_asc' %}selected{% endif %}>Amount (Low to High)</option>
+                                </select>
                             </div>
-                            <div class="space-y-2">
-                                <label class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">End Date</label>
-                                <input type="date" name="end_date" value="{{ end_date }}" onchange="document.getElementById('filter_type_input').value='custom'; this.form.submit()" class="w-full bg-[#18181b] border border-[#27272a] rounded-xl py-2 px-4 text-sm text-zinc-300 outline-none focus:border-primary">
-                            </div>
+                        </div>
+
+                        <!-- Form Submit & Reset Actions -->
+                        <div class="flex items-center gap-3 pt-4 border-t border-[#2a2b3d]">
+                            <button type="submit" class="bg-violet-600 hover:bg-violet-500 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-violet-600/25 active:scale-95 transition-all flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">filter_alt</span>
+                                Apply Filters
+                            </button>
+                            <a href="{{ url_for('history') }}" class="px-5 py-2.5 rounded-xl border border-[#2a2b3d] text-slate-400 hover:text-white hover:border-slate-600 text-sm font-semibold transition-all">
+                                Reset
+                            </a>
                         </div>
                     </form>
                 </div>
 
-                <!-- 3D TORUS RING WIDGET -->
+                <!-- 3D Category Distribution Widget -->
                 <div id="widget-panel" class="lg:col-span-4 glass-card p-6 overflow-hidden relative flex flex-col justify-between">
-                    <div class="flex items-center justify-between pb-3 border-b border-[#27272a]">
-                        <h2 class="text-sm font-bold text-white">3D Distribution Ring</h2>
-                        <span class="text-[10px] text-zinc-500 uppercase tracking-wider">Interactive</span>
+                    <div class="flex items-center justify-between pb-3 border-b border-[#2a2b3d]">
+                        <h2 class="text-sm font-bold text-white">3D Category Ring</h2>
+                        <span class="text-xs text-slate-400">Interactive</span>
                     </div>
                     <div id="canvas-container"></div>
-                    <p class="text-center text-xs text-zinc-500 italic">Drag to rotate category visualization</p>
                 </div>
             </div>
 
-            <!-- TRANSACTION TABLE -->
+            <!-- Transaction History Table Card -->
             <div id="table-container" class="glass-card overflow-hidden">
-                <div class="p-6 border-b border-[#27272a] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 class="text-lg font-semibold text-white">Transaction Records</h2>
-                    <div class="flex items-center gap-2 text-sm text-zinc-400">
-                        <span>Sort by:</span>
-                        <select onchange="location = this.value;" class="bg-[#18181b] border border-[#27272a] rounded-lg py-1 px-3 font-medium text-primary outline-none cursor-pointer text-xs">
-                            <option value="{{ url_for('history', filter=filter_type, category=category_filter, search=search_query, sort='date_desc', start_date=start_date, end_date=end_date) }}" {% if sort_order == 'date_desc' %}selected{% endif %}>Date: Newest First</option>
-                            <option value="{{ url_for('history', filter=filter_type, category=category_filter, search=search_query, sort='date_asc', start_date=start_date, end_date=end_date) }}" {% if sort_order == 'date_asc' %}selected{% endif %}>Date: Oldest First</option>
-                            <option value="{{ url_for('history', filter=filter_type, category=category_filter, search=search_query, sort='amount_desc', start_date=start_date, end_date=end_date) }}" {% if sort_order == 'amount_desc' %}selected{% endif %}>Amount: High to Low</option>
-                            <option value="{{ url_for('history', filter=filter_type, category=category_filter, search=search_query, sort='amount_asc', start_date=start_date, end_date=end_date) }}" {% if sort_order == 'amount_asc' %}selected{% endif %}>Amount: Low to High</option>
-                        </select>
-                    </div>
+                <div class="p-6 border-b border-[#2a2b3d] flex justify-between items-center bg-[#10111a]">
+                    <h2 class="text-lg font-bold text-white">Recent Transactions</h2>
+                    <span class="text-xs text-slate-400 font-mono">{{ stats.count }} record(s)</span>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-[#18181b] text-zinc-400 text-xs uppercase tracking-wider">
+                        <thead class="bg-[#181926] text-slate-400 text-xs uppercase tracking-wider border-b border-[#2a2b3d]">
                             <tr>
                                 <th class="px-6 py-4 font-semibold">Date</th>
                                 <th class="px-6 py-4 font-semibold">Category</th>
@@ -309,80 +341,81 @@
                                 <th class="px-6 py-4 font-semibold text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="transaction-body" class="text-sm text-zinc-300 divide-y divide-[#27272a]">
+                        <tbody id="transaction-body" class="text-sm text-slate-300 divide-y divide-[#2a2b3d]">
                             {% if expenses %}
-                                {% for t in expenses %}
+                                {% for exp in expenses %}
                                 <tr class="table-row-hover group transition-all">
-                                    <td class="px-6 py-4 text-zinc-400 font-mono text-xs">{{ t.date }}</td>
+                                    <td class="px-6 py-4 text-slate-400 font-mono text-xs">{{ exp.date.strftime('%Y-%m-%d') if exp.date.strftime is defined else exp.date }}</td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-2">
-                                            <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
-                                            <span class="text-zinc-200 font-medium">{{ t.category }}</span>
+                                            <span class="w-2.5 h-2.5 rounded-full bg-violet-400"></span>
+                                            <span class="text-slate-200 font-medium">{{ exp.category }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 font-medium text-white">{{ t.description or 'No description' }}</td>
-                                    <td class="px-6 py-4 font-mono font-bold text-white">₹{{ t.amount }}</td>
+                                    <td class="px-6 py-4 font-medium text-white">{{ exp.description }}</td>
+                                    <td class="px-6 py-4 font-mono font-bold text-white">₹{{ exp.amount }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        <div class="flex justify-end gap-3 opacity-90 group-hover:opacity-100 transition-opacity">
-                                            <a href="{{ url_for('edit_expense', id=t.id) }}" class="text-zinc-400 hover:text-primary transition-colors" title="Edit">
+                                        <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <a href="{{ url_for('edit_expense', id=exp.id) }}" class="text-slate-400 hover:text-violet-400 transition-colors p-1" title="Edit">
                                                 <span class="material-symbols-outlined text-lg">edit</span>
                                             </a>
-                                            <form method="POST" action="{{ url_for('delete_expense', id=t.id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this expense?');">
-                                                <button type="submit" class="text-zinc-400 hover:text-accent transition-colors" title="Delete">
-                                                    <span class="material-symbols-outlined text-lg">delete</span>
-                                                </button>
-                                            </form>
+                                            <a href="{{ url_for('delete_expense', id=exp.id) }}" class="text-slate-400 hover:text-red-400 transition-colors p-1" title="Delete" onclick="return confirm('Are you sure you want to delete this expense?')">
+                                                <span class="material-symbols-outlined text-lg">delete</span>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-zinc-500 text-sm">
-                                        No expense records found matching your filters.
+                                    <td colspan="5" class="px-6 py-12 text-center text-slate-500 text-sm">
+                                        No expenses found matching your filter criteria.
                                     </td>
                                 </tr>
                             {% endif %}
                         </tbody>
                     </table>
                 </div>
-
-                <!-- TABLE FOOTER METRICS -->
-                <div id="pagination" class="p-6 border-t border-[#27272a] flex justify-between items-center text-xs text-zinc-400">
-                    <span>Showing {{ expenses|length }} entries</span>
-                    <a href="{{ url_for('addexpense') }}" class="text-primary hover:underline font-semibold flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm">add</span> Create New Entry
-                    </a>
-                </div>
             </div>
         </div>
     </main>
 
+    <!-- JavaScript Controls -->
     <script>
-        // --- THREE.JS 3D TORUS VISUALIZATION ---
+        function toggleCustomDates(val) {
+            const container = document.getElementById('custom-date-container');
+            if (container) {
+                if (val === 'custom') {
+                    container.classList.remove('hidden');
+                } else {
+                    container.classList.add('hidden');
+                }
+            }
+        }
+
         window.addEventListener('load', () => {
             try {
                 initThreeJS();
-            } catch(e) { console.error("ThreeJS Error:", e); }
+            } catch(e) { console.error("Three.js Ring Error:", e); }
 
             try {
                 if (typeof gsap !== 'undefined') {
-                    const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-                    tl.from("#sidebar", { xPercent: -100, duration: 0.8 })
-                      .from("#top-header", { yPercent: -100, duration: 0.6 }, "-=0.5")
-                      .from("#page-header", { opacity: 0, y: 20, duration: 0.5 }, "-=0.3")
-                      .from("#metrics-grid > div", { opacity: 0, y: 20, stagger: 0.1, duration: 0.5 }, "-=0.3")
-                      .from("#table-container", { opacity: 0, y: 20, duration: 0.5 }, "-=0.2");
+                    gsap.from("#sidebar", { xPercent: -100, duration: 0.8, ease: "power4.out" });
+                    gsap.from("#page-header", { opacity: 0, y: 20, duration: 0.6, ease: "power3.out" });
+                    gsap.from(".glass-card", { opacity: 0, y: 20, stagger: 0.1, duration: 0.5 });
                 }
-            } catch(e) { console.error("GSAP Error:", e); }
+            } catch(e) { console.error("GSAP Exception:", e); }
         });
 
+        /**
+         * THREE.JS 3D VISUALIZATION: Glowing Torus Ring
+         */
         function initThreeJS() {
             const container = document.getElementById('canvas-container');
             if (!container || typeof THREE === 'undefined') return;
 
             const width = container.clientWidth || 300;
-            const height = container.clientHeight || 240;
+            const height = container.clientHeight || 250;
 
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
@@ -392,22 +425,22 @@
             container.innerHTML = '';
             container.appendChild(renderer.domElement);
 
-            // Geometry: A glowing Torus Ring
+            // Glowing Torus Ring
             const geometry = new THREE.TorusGeometry(8, 2.5, 16, 80);
             const material = new THREE.MeshStandardMaterial({
                 color: 0xa78bfa,
                 wireframe: true,
-                emissive: 0x5b21b6,
-                emissiveIntensity: 0.4
+                emissive: 0xa78bfa,
+                emissiveIntensity: 0.5
             });
             const torus = new THREE.Mesh(geometry, material);
             scene.add(torus);
 
-            // Add floating point lights & spheres
+            // Floating Data Spheres
             const spheres = [];
             const colors = [0xa78bfa, 0xea580c, 0x10b981, 0x3b82f6];
-            for(let i=0; i<6; i++) {
-                const sphereGeom = new THREE.SphereGeometry(0.4, 16, 16);
+            for (let i = 0; i < 6; i++) {
+                const sphereGeom = new THREE.SphereGeometry(0.6, 16, 16);
                 const sphereMat = new THREE.MeshStandardMaterial({ color: colors[i % colors.length] });
                 const sphere = new THREE.Mesh(sphereGeom, sphereMat);
 
@@ -419,7 +452,7 @@
                 spheres.push(sphere);
             }
 
-            const light = new THREE.PointLight(0xffffff, 1.5, 100);
+            const light = new THREE.PointLight(0xffffff, 1.2, 100);
             light.position.set(10, 10, 10);
             scene.add(light);
             scene.add(new THREE.AmbientLight(0x404040, 0.8));
@@ -429,7 +462,7 @@
             function animate() {
                 requestAnimationFrame(animate);
                 torus.rotation.x += 0.008;
-                torus.rotation.y += 0.005;
+                torus.rotation.y += 0.006;
 
                 spheres.forEach(s => {
                     s.position.y += Math.sin(Date.now() * 0.001 + s.position.x) * 0.015;
@@ -441,7 +474,7 @@
 
             window.addEventListener('resize', () => {
                 const w = container.clientWidth || 300;
-                const h = container.clientHeight || 240;
+                const h = container.clientHeight || 250;
                 camera.aspect = w / h;
                 camera.updateProjectionMatrix();
                 renderer.setSize(w, h);
