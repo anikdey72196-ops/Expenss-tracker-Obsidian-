@@ -197,9 +197,12 @@
                 <!-- Sub Metric Cards -->
                 <div class="col-span-12 lg:col-span-4 grid grid-cols-1 gap-6">
                     <div class="dashboard-card p-6 flex flex-col justify-between">
-                        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Today's Score</p>
+                        <div class="flex items-center justify-between">
+                            <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Today's Score</p>
+                            <span class="text-[10px] text-violet-300 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full font-medium">Resets 12:00 AM</span>
+                        </div>
                         <div class="flex items-end justify-between mt-4">
-                            <span class="text-3xl font-bold text-white">{{ stats.today_score }}</span>
+                            <span class="text-3xl font-bold text-white">{{ stats.today_score }}<span class="text-xs text-slate-500 font-normal"> / 100</span></span>
                             <div class="w-7 h-7 rounded-full border-2 border-violet-400 border-t-transparent animate-spin"></div>
                         </div>
                     </div>

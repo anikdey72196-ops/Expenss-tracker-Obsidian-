@@ -111,7 +111,8 @@ def get_dashboard_stats(expenses):
         }
         
     overall_score = 5.0
-    today_score = 50
+    # Today's Score starts at a fresh 100 points baseline at midnight (12:00 AM) each day
+    today_score = 100
     last_month_total = 0.0
     
     today = datetime.date.today()
@@ -145,18 +146,18 @@ def get_dashboard_stats(expenses):
         amount = exp.amount
         exp_date = exp.date
             
-        
         if category in GOOD_CATEGORIES:
             overall_score += 1
         elif category in BAD_CATEGORIES:
             overall_score -= 2
             
-        
+        # Daily Score: Resets automatically at 12:00 AM Midnight (new date).
+        # Only transactions recorded on today's calendar date affect today's score.
         if exp_date == today:
             if category in GOOD_CATEGORIES:
                 today_score += 10
             elif category in BAD_CATEGORIES:
-                today_score -= 20
+                today_score -= 15
                 
         
         if first_of_last_month <= exp_date <= last_day_last_month:
@@ -289,18 +290,75 @@ def login():
                 return redirect(url_for('login'))
     return render_template('login.html', form=form)
 
+def _safe_stats(raw_stats):
+    """
+    Ensure the stats dict always contains every key the Jinja2 template depends on,
+    with safe numeric/list defaults.  This prevents a silent Jinja2 crash when
+    `stats` is missing a key, which causes math operations like
+    ``{{ stats.overall_score * 10 }}`` to raise a TypeError that silently swallows
+    all HTML inside the surrounding grid container.
+    """
+    today = datetime.date.today()
+    _default_chart = {
+        'labels': [(today - datetime.timedelta(days=i)).strftime('%a').upper() for i in range(6, -1, -1)],
+        'data': [0.0] * 7,
+    }
+    _default_monthly = {
+        'labels': [
+            datetime.date(
+                today.year + (today.month - i - 1) // 12,
+                (today.month - i - 1) % 12 + 1,
+                1,
+            ).strftime('%b').upper()
+            for i in range(5, -1, -1)
+        ],
+        'data': [0.0] * 6,
+    }
+    defaults = {
+        'overall_score': 5.0,
+        'today_score': 50,
+        'last_month_total': 0.0,
+        'daily_avg_score': 5.0,
+        'chart_data': _default_chart,
+        'monthly_chart_data': _default_monthly,
+        'category_chart_data': {'labels': [], 'data': []},
+        'top_categories': [],
+    }
+    if not isinstance(raw_stats, dict):
+        return defaults
+    merged = {**defaults, **raw_stats}
+    # Guarantee numeric types so Jinja2 math never raises TypeError
+    merged['overall_score'] = float(merged['overall_score'] or 0.0)
+    merged['today_score'] = int(merged['today_score'] or 0)
+    merged['last_month_total'] = float(merged['last_month_total'] or 0.0)
+    merged['daily_avg_score'] = float(merged['daily_avg_score'] or 0.0)
+    # Guarantee top_categories is always a list, never None
+    if not isinstance(merged['top_categories'], list):
+        merged['top_categories'] = []
+    return merged
+
+
 @app.route('/home', methods=['GET'])
 def home():
     if 'user_id' not in session:
         flash("Please login first", "danger")
         return redirect(url_for('login'))
-    
-    # Get expenses for the logged in user to display on the dashboard
+
     user_id = session.get('user_id')
-    expenses = Expense.query.filter_by(user_id=user_id).order_by(Expense.date.desc()).all()
-    expenses_list = [exp.to_dict() for exp in expenses]
-    stats = get_dashboard_stats(expenses)
-    
+    expenses = []
+    expenses_list = []
+    try:
+        expenses = Expense.query.filter_by(user_id=user_id).order_by(Expense.date.desc()).all()
+        expenses_list = [exp.to_dict() for exp in expenses]
+    except Exception as e:
+        app.logger.error(f"DB error loading expenses for user {user_id}: {e}")
+        flash("Could not load your expenses. Please try again later.", "danger")
+
+    # Compute stats from ORM objects; _safe_stats guarantees all required keys
+    # are present with valid numeric/list defaults so Jinja2 math never crashes.
+    raw_stats = get_dashboard_stats(expenses)
+    stats = _safe_stats(raw_stats)
+
     return render_template('home.html', username=session['user'], expenses=expenses_list, stats=stats)
 
 @app.route('/history', methods=['GET'])
