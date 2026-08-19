@@ -41,7 +41,7 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-        #canvas-container { width: 100%; height: 300px; cursor: grab; }
+        #canvas-container { width: 100%; height: 300px; cursor: grab; min-height: 250px; }
         .chat-panel { transform: translateY(120%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .chat-panel.open { transform: translateY(0); }
         .gradient-text { background: linear-gradient(to right, #a78bfa, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -57,18 +57,18 @@
                     <div class="w-8 h-8 bg-gradient-to-br from-accent to-highlight rounded-lg flex items-center justify-center">
                         <span class="material-symbols-outlined text-white text-sm">diamond</span>
                     </div>
-                    <span class="hidden lg:block font-bold text-lg tracking-tight opacity-0 sidebar-text">Obsidian</span>
+                    <span class="hidden lg:block font-bold text-lg tracking-tight sidebar-text">Obsidian</span>
                 </a>
             </div>
 
             <nav class="flex-1 px-4 space-y-2 mt-4">
                 <a href="{{ url_for('home') }}" class="sidebar-link flex items-center gap-4 p-3 rounded-xl bg-[#18181b] text-accent">
                     <span class="material-symbols-outlined">dashboard</span>
-                    <span class="hidden lg:block font-medium opacity-0 sidebar-text">Dashboard</span>
+                    <span class="hidden lg:block font-medium sidebar-text">Dashboard</span>
                 </a>
                 <a href="{{ url_for('history') }}" class="sidebar-link flex items-center gap-4 p-3 rounded-xl text-gray-400 hover:text-white transition-all">
                     <span class="material-symbols-outlined">history</span>
-                    <span class="hidden lg:block font-medium opacity-0 sidebar-text">History</span>
+                    <span class="hidden lg:block font-medium sidebar-text">History</span>
                 </a>
             </nav>
         </div>
@@ -80,7 +80,7 @@
             </a>
             <a href="{{ url_for('logout') }}" class="w-full flex items-center gap-4 p-3 text-gray-500 hover:text-red-400 transition-all">
                 <span class="material-symbols-outlined">logout</span>
-                <span class="hidden lg:block font-medium opacity-0 sidebar-text">Logout</span>
+                <span class="hidden lg:block font-medium sidebar-text">Logout</span>
             </a>
         </div>
     </aside>
@@ -306,85 +306,102 @@
     </a>
 
     <script>
-        // --- GSAP ENTRANCE ANIMATIONS ---
-        window.addEventListener('DOMContentLoaded', () => {
-            const tl = gsap.timeline();
+        let bars = [];
+        let renderer, camera, scene;
 
-            tl.from("#sidebar", { x: -100, opacity: 0, duration: 0.8, ease: "power4.out" })
-              .from("#main-content", { x: 30, opacity: 0, duration: 0.6, ease: "power3.out" }, "-=0.4")
-              .from(".glass-card", { y: 25, opacity: 0, stagger: 0.1, duration: 0.5, ease: "back.out(1.5)" }, "-=0.3")
-              .to(".sidebar-text", { opacity: 1, duration: 0.4 }, "-=0.2");
-            
+        // Init function after DOM ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // GSAP Entrance Animations
+            try {
+                if (typeof gsap !== 'undefined') {
+                    const tl = gsap.timeline();
+                    tl.from("#sidebar", { x: -100, opacity: 0, duration: 0.8, ease: "power4.out" })
+                      .from("#main-content", { x: 30, opacity: 0, duration: 0.6, ease: "power3.out" }, "-=0.4")
+                      .from(".glass-card", { y: 25, opacity: 0, stagger: 0.1, duration: 0.5, ease: "back.out(1.5)" }, "-=0.3");
+                }
+            } catch(e) { console.error(e); }
+
+            // Safe 3D Chart Init
+            try {
+                init3DChart();
+            } catch(e) { console.error("3D Chart Error:", e); }
+
+            // Fetch AI insights
             fetchInsights();
         });
 
         // --- THREE.JS 3D CHART LOGIC ---
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        function init3DChart() {
+            const container = document.getElementById('canvas-container');
+            if (!container || typeof THREE === 'undefined') return;
 
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
+            const width = container.clientWidth || 500;
+            const height = container.clientHeight || 300;
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-        const pointLight = new THREE.PointLight(0xa78bfa, 2.5);
-        pointLight.position.set(5, 5, 5);
-        scene.add(pointLight);
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
-        const pointLight2 = new THREE.PointLight(0xea580c, 1.5);
-        pointLight2.position.set(-5, -2, 3);
-        scene.add(pointLight2);
+            renderer.setSize(width, height);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
 
-        // Create 3D Bars
-        const bars = [];
-        const barCount = 5;
-        const barWidth = 0.6;
-        const spacing = 1.2;
-        let barData = [2.5, 4, 3, 5, 2];
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xa78bfa, 2.5);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
 
-        {% if stats.top_categories %}
-            barData = [
-                {% for cat in stats.top_categories[:5] %}
-                    {{ (cat.amount / 1000) | round(1) if cat.amount else 1 }},
-                {% endfor %}
-            ];
-            while (barData.length < 5) barData.push(1);
-        {% endif %}
+            const pointLight2 = new THREE.PointLight(0xea580c, 1.5);
+            pointLight2.position.set(-5, -2, 3);
+            scene.add(pointLight2);
 
-        for(let i=0; i<barCount; i++) {
-            const height = barData[i] || 1;
-            const geometry = new THREE.BoxGeometry(barWidth, 1, barWidth);
-            const material = new THREE.MeshStandardMaterial({
-                color: i === 4 ? 0xea580c : 0xa78bfa,
-                roughness: 0.3,
-                metalness: 0.8
-            });
-            const bar = new THREE.Mesh(geometry, material);
-            bar.position.x = (i - (barCount-1)/2) * spacing;
-            bar.position.y = height / 2;
-            bar.scale.y = height;
-            scene.add(bar);
-            bars.push({ mesh: bar, targetY: height });
+            // Create 3D Bars
+            const barCount = 5;
+            const barWidth = 0.6;
+            const spacing = 1.2;
+            let barData = [2.5, 4, 3, 5, 2];
+
+            {% if stats.top_categories %}
+                barData = [
+                    {% for cat in stats.top_categories[:5] %}
+                        {{ (cat.amount / 1000) | round(1) if cat.amount else 1 }},
+                    {% endfor %}
+                ];
+                while (barData.length < 5) barData.push(1);
+            {% endif %}
+
+            bars = [];
+            for(let i=0; i<barCount; i++) {
+                const heightVal = Math.max(0.5, barData[i] || 1);
+                const geometry = new THREE.BoxGeometry(barWidth, 1, barWidth);
+                const material = new THREE.MeshStandardMaterial({
+                    color: i === 4 ? 0xea580c : 0xa78bfa,
+                    roughness: 0.3,
+                    metalness: 0.8
+                });
+                const bar = new THREE.Mesh(geometry, material);
+                bar.position.x = (i - (barCount-1)/2) * spacing;
+                bar.position.y = heightVal / 2;
+                bar.scale.y = heightVal;
+                scene.add(bar);
+                bars.push({ mesh: bar, targetY: heightVal });
+            }
+
+            camera.position.z = 7;
+            camera.position.y = 3;
+            camera.lookAt(0, 1.5, 0);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                bars.forEach((bar) => {
+                    if (bar.mesh) bar.mesh.rotation.y += 0.008;
+                });
+                renderer.render(scene, camera);
+            }
+            animate();
         }
-
-        camera.position.z = 7;
-        camera.position.y = 3;
-        camera.lookAt(0, 1.5, 0);
-
-        // Animation Loop
-        function animate() {
-            requestAnimationFrame(animate);
-
-            bars.forEach((bar, idx) => {
-                bar.mesh.rotation.y += 0.008;
-            });
-
-            renderer.render(scene, camera);
-        }
-        animate();
 
         function toggle3DMode(mode) {
             const btnWeek = document.getElementById('btn-week');
@@ -393,23 +410,30 @@
             if (mode === 'week') {
                 btnWeek.className = "px-4 py-1 text-xs font-bold rounded-md bg-accent text-white transition-all";
                 btnMonth.className = "px-4 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all";
-                bars.forEach((bar, i) => {
-                    gsap.to(bar.mesh.scale, { y: bar.targetY, duration: 0.6 });
+                bars.forEach((bar) => {
+                    if (typeof gsap !== 'undefined' && bar.mesh) {
+                        gsap.to(bar.mesh.scale, { y: bar.targetY, duration: 0.6 });
+                    }
                 });
             } else {
                 btnMonth.className = "px-4 py-1 text-xs font-bold rounded-md bg-accent text-white transition-all";
                 btnWeek.className = "px-4 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all";
                 bars.forEach((bar, i) => {
-                    gsap.to(bar.mesh.scale, { y: (i + 1) * 1.2, duration: 0.6 });
+                    if (typeof gsap !== 'undefined' && bar.mesh) {
+                        gsap.to(bar.mesh.scale, { y: (i + 1) * 1.2, duration: 0.6 });
+                    }
                 });
             }
         }
 
         window.addEventListener('resize', () => {
-            if (!container) return;
-            camera.aspect = container.clientWidth / container.clientHeight;
+            const container = document.getElementById('canvas-container');
+            if (!container || !camera || !renderer) return;
+            const w = container.clientWidth || 500;
+            const h = container.clientHeight || 300;
+            camera.aspect = w / h;
             camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setSize(w, h);
         });
 
         // --- UI & AI INTERACTIVE LOGIC ---
@@ -527,12 +551,15 @@
             });
         }
 
-        document.getElementById('ai-chat-input').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendUserMessage();
-            }
-        });
+        const inputField = document.getElementById('ai-chat-input');
+        if (inputField) {
+            inputField.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendUserMessage();
+                }
+            });
+        }
     </script>
 </body>
 </html>
