@@ -4,6 +4,7 @@ from imports import (
     generate_password_hash, check_password_hash, CSRFProtect,
     db, User, Expense, RegistrationForm, LoginForm , json , requests
 )
+import time
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
@@ -264,10 +265,52 @@ def register():
                 return redirect(url_for('register'))
     return render_template('register.html', form=form)
     
+
+# In-memory dictionary for bounded rate limiting
+_login_rate_limit_cache = {}
+
+def _check_login_rate_limit(ip_address):
+    """
+    Bounded rate limiter: max 5 attempts per 5 minutes.
+    Clears cache if it grows too large to prevent DoS via memory leak.
+    """
+    MAX_ATTEMPTS = 5
+    WINDOW_SECONDS = 300
+    MAX_CACHE_SIZE = 1000
+
+    now = time.time()
+
+    # Prune cache to prevent memory leak DoS
+    if len(_login_rate_limit_cache) > MAX_CACHE_SIZE:
+        # Remove expired entries
+        expired_keys = [k for k, v in _login_rate_limit_cache.items() if now - v['start_time'] > WINDOW_SECONDS]
+        for k in expired_keys:
+            del _login_rate_limit_cache[k]
+
+        # If still too large after pruning, clear it aggressively
+        if len(_login_rate_limit_cache) > MAX_CACHE_SIZE:
+            _login_rate_limit_cache.clear()
+
+    record = _login_rate_limit_cache.get(ip_address)
+    if not record or now - record['start_time'] > WINDOW_SECONDS:
+        _login_rate_limit_cache[ip_address] = {'count': 1, 'start_time': now}
+        return False
+
+    if record['count'] >= MAX_ATTEMPTS:
+        return True
+
+    record['count'] += 1
+    return False
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if request.method == 'POST':
+        ip_address = request.remote_addr or 'unknown'
+        if _check_login_rate_limit(ip_address):
+            flash("Too many login attempts. Please try again later.", "danger")
+            return redirect(url_for('login'))
+
         if form.validate_on_submit():
             try:
                 # Find the user by their username

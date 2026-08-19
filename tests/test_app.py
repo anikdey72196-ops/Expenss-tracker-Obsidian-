@@ -15,10 +15,23 @@ def client():
     flask_app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
 
     # Setup database
+
     with flask_app.app_context():
         db.create_all()
 
+    # Clear rate limit dicts to avoid test failures
+    from app import _login_rate_limit_cache
+    _login_rate_limit_cache.clear()
+
+    # Try to clear ai service cache too if available
+    try:
+        from ai_service import _rate_limit_cache
+        _rate_limit_cache.clear()
+    except Exception:
+        pass
+
     with flask_app.test_client() as client:
+
         yield client
         
     # Teardown database
