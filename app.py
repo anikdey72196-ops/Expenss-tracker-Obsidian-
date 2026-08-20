@@ -572,6 +572,26 @@ def logout():
     flash("Logged out successfully!", "success")
     return redirect(url_for('index'))
 
+@app.route('/admin')
+def admin_panel():
+    if 'user_id' not in session:
+        flash("Please login first to access Admin Panel", "danger")
+        return redirect(url_for('login'))
+        
+    users = User.query.all()
+    all_expenses = Expense.query.order_by(Expense.id.desc()).all()
+    expenses_data = []
+    for exp in all_expenses:
+        expenses_data.append({
+            'id': exp.id,
+            'username': exp.user.username if exp.user else 'Unknown',
+            'category': exp.category,
+            'amount': exp.amount,
+            'date': exp.date.strftime('%Y-%m-%d') if exp.date else '--',
+            'description': exp.description
+        })
+    return render_template('admin.html', users=users, expenses=expenses_data, total_users=len(users), total_expenses=len(all_expenses))
+
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
     app.run(debug=debug_mode)
