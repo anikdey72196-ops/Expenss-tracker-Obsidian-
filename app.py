@@ -574,9 +574,16 @@ def logout():
 
 @app.route('/admin')
 def admin_panel():
-    if 'user_id' not in session:
-        flash("Please login first to access Admin Panel", "danger")
-        return redirect(url_for('login'))
+
+    admin_user = os.environ.get('ADMIN_USERNAME')
+    admin_key = os.environ.get('ADMIN_SECRET_KEY')
+    
+    key = request.args.get('key')
+    current_user = session.get('user')
+    
+    if not session.get('user_id') or not admin_user or not (current_user == admin_user or (admin_key and key == admin_key)):
+        flash("Access Denied: Administrator permissions required.", "danger")
+        return redirect(url_for('home'))
         
     users = User.query.all()
     all_expenses = Expense.query.order_by(Expense.id.desc()).all()
