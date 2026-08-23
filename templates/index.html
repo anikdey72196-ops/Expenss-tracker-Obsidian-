@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obsidian | Modern Expense Tracker</title>
+    <meta name="description" content="Obsidian is a high-performance, dark-themed personal expense tracker featuring deep analytics, developer-grade speed, and AI insights.">
+    <meta property="og:title" content="Obsidian | Modern Expense Tracker">
+    <meta property="og:description" content="A high-performance expense tracker with precision analytics and AI financial insights.">
+    <meta property="og:type" content="website">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -347,10 +351,10 @@
     </style>
 </head>
 <body>
-    <div id="canvas-container"></div>
+    <div id="canvas-container" aria-hidden="true"></div>
     <nav>
         <a href="{{ url_for('index') }}" class="logo">
-            <span class="material-symbols-outlined icon" style="font-variation-settings: 'FILL' 1;">layers</span>
+            <span class="material-symbols-outlined icon" aria-hidden="true" style="font-variation-settings: 'FILL' 1;">layers</span>
             <span>Obsidian</span>
         </a>
         <div class="nav-links">
@@ -379,21 +383,21 @@
         <div class="features">
             <div class="card">
                 <div class="card-icon purple">
-                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitoring</span>
+                    <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings: 'FILL' 1;">monitoring</span>
                 </div>
                 <h3>Deep Analytics</h3>
                 <p>Visualize trends with precise, high-contrast charts. Drill down into every micro-transaction with granular filters.</p>
             </div>
             <div class="card">
                 <div class="card-icon green">
-                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">keyboard</span>
+                    <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings: 'FILL' 1;">keyboard</span>
                 </div>
                 <h3>Developer-Grade</h3>
                 <p>Clean, fast, and keyboard-friendly interface. Command palette integration for power users who hate clicking.</p>
             </div>
             <div class="card">
                 <div class="card-icon red">
-                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">encrypted</span>
+                    <span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings: 'FILL' 1;">encrypted</span>
                 </div>
                 <h3>Secure by Default</h3>
                 <p>Your financial data stays private and encrypted. Zero-knowledge architecture means we can't see your data.</p>
