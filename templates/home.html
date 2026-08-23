@@ -266,13 +266,13 @@
             </div>
             <div class="p-4 bg-[#181926] border-t border-[#2a2b3d]">
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <button onclick="sendQuickMsg('How can I save more?')" class="text-[10px] bg-violet-500/10 text-violet-300 px-3 py-1 rounded-full border border-violet-500/20 hover:bg-violet-600 hover:text-white transition-colors">Save more</button>
-                    <button onclick="sendQuickMsg('Analyze my spending')" class="text-[10px] bg-violet-500/10 text-violet-300 px-3 py-1 rounded-full border border-violet-500/20 hover:bg-violet-600 hover:text-white transition-colors">Analyze</button>
-                    <button onclick="sendQuickMsg('Am I overspending?')" class="text-[10px] bg-violet-500/10 text-violet-300 px-3 py-1 rounded-full border border-violet-500/20 hover:bg-violet-600 hover:text-white transition-colors">Overspending?</button>
+                    <button onclick="sendQuickMsg('How can I save more?')" class="quick-msg-btn text-[10px] bg-violet-500/10 text-violet-300 px-3 py-1 rounded-full border border-violet-500/20 hover:bg-violet-600 hover:text-white transition-all">Save more</button>
+                    <button onclick="sendQuickMsg('Analyze my spending')" class="quick-msg-btn text-[10px] bg-violet-500/10 text-violet-300 px-3 py-1 rounded-full border border-violet-500/20 hover:bg-violet-600 hover:text-white transition-all">Analyze</button>
+                    <button onclick="sendQuickMsg('Am I overspending?')" class="quick-msg-btn text-[10px] bg-violet-500/10 text-violet-300 px-3 py-1 rounded-full border border-violet-500/20 hover:bg-violet-600 hover:text-white transition-all">Overspending?</button>
                 </div>
                 <div class="relative">
-                    <input type="text" id="ai-chat-input" placeholder="Ask anything..." class="w-full bg-[#090a0f] border border-[#2a2b3d] rounded-xl py-2.5 pl-4 pr-10 text-xs text-white focus:outline-none focus:border-violet-500">
-                    <button onclick="sendUserMessage()" class="absolute right-2 top-1/2 -translate-y-1/2 text-violet-400 hover:text-white transition-colors p-1">
+                    <input type="text" id="ai-chat-input" placeholder="Ask anything..." class="w-full bg-[#090a0f] border border-[#2a2b3d] rounded-xl py-2.5 pl-4 pr-10 text-xs text-white focus:outline-none focus:border-violet-500 disabled:opacity-50">
+                    <button id="ai-chat-send" onclick="sendUserMessage()" class="absolute right-2 top-1/2 -translate-y-1/2 text-violet-400 hover:text-white transition-colors p-1 disabled:opacity-50">
                         <span class="material-symbols-outlined text-sm">send</span>
                     </button>
                 </div>
@@ -453,7 +453,25 @@
             panel.classList.toggle('open');
             icon.innerText = panel.classList.contains('open') ? 'close' : 'chat_bubble';
         }
+        let isAiGenerating = false;
+
+        function setChatState(generating) {
+            isAiGenerating = generating;
+            const input = document.getElementById('ai-chat-input');
+            const sendBtn = document.getElementById('ai-chat-send');
+            const quickBtns = document.querySelectorAll('.quick-msg-btn');
+            
+            if (input) input.disabled = generating;
+            if (sendBtn) sendBtn.disabled = generating;
+            quickBtns.forEach(btn => {
+                btn.disabled = generating;
+                btn.style.pointerEvents = generating ? 'none' : 'auto';
+                btn.style.opacity = generating ? '0.5' : '1';
+            });
+        }
+
         function sendQuickMsg(msg) {
+            if (isAiGenerating) return;
             const input = document.getElementById('ai-chat-input');
             if (input) {
                 input.value = msg;
@@ -461,33 +479,46 @@
             }
         }
         function sendUserMessage() {
+            if (isAiGenerating) return;
             const input = document.getElementById('ai-chat-input');
             const message = input ? input.value.trim() : '';
             if (!message) return;
+
+            setChatState(true);
+
             const chatBox = document.getElementById('chat-messages');
             const userMsg = document.createElement('div');
             userMsg.className = "bg-violet-600 text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] ml-auto text-right";
             userMsg.innerText = message;
             chatBox.appendChild(userMsg);
+
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
+
             const aiMsg = document.createElement('div');
             aiMsg.className = "bg-[#1c1d2b] p-3.5 rounded-2xl rounded-tl-none text-slate-300 max-w-[85%] border border-white/5";
             aiMsg.innerHTML = '<span class="animate-pulse">Thinking...</span>';
             chatBox.appendChild(aiMsg);
             chatBox.scrollTop = chatBox.scrollHeight;
+
             let fullText = '';
             fetch('/ai/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: message })
             }).then(response => {
-                if (!response.ok) throw new Error('Could not connect to AI service');
+                if (!response.ok) {
+                    setChatState(false);
+                    throw new Error('Could not connect to AI service');
+                }
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 function read() {
                     reader.read().then(({ done, value }) => {
-                        if (done) return;
+                        if (done) {
+                            setChatState(false);
+                            return;
+                        }
                         const text = decoder.decode(value);
                         const lines = text.split('\n');
                         for (const line of lines) {
@@ -499,15 +530,21 @@
                                         aiMsg.innerHTML = fullText;
                                         chatBox.scrollTop = chatBox.scrollHeight;
                                     }
+                                    if (data.done) {
+                                        setChatState(false);
+                                    }
                                 } catch(e) {}
                             }
                         }
                         read();
+                    }).catch(() => {
+                        setChatState(false);
                     });
                 }
                 read();
             }).catch(err => {
                 aiMsg.innerText = "Analyzing your request... Based on recent trends, reducing dining expenses by 10% could save you ₹1,200 monthly.";
+                setChatState(false);
             });
         }
         function fetchInsights() {

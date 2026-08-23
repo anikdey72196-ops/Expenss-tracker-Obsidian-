@@ -13,7 +13,7 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '').strip()
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
 
 OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen2.5-coder:7b')
+OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'gemma4:26b')
 
 _rate_limit_cache = {}
 RATE_LIMIT_SECONDS = 3  # Reduced to 3 seconds for better UX
@@ -116,7 +116,7 @@ def _get_expense_summary(user_id):
 
 def _get_active_ollama_model():
     """Determine active Ollama model, falling back to installed models if needed."""
-    model = os.environ.get('OLLAMA_MODEL', 'qwen2.5-coder:7b')
+    model = os.environ.get('OLLAMA_MODEL', 'gemma4:26b')
     try:
         resp = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
         if resp.status_code == 200:
