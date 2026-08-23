@@ -283,8 +283,13 @@
                         <tbody id="transaction-body" class="text-sm text-slate-300 divide-y divide-[#2a2b3d]">
                             {% if expenses %}
                                 {% for exp in expenses %}
-                                <tr class="table-row-hover group transition-all">
-                                    <td class="px-6 py-4 text-slate-400 font-mono text-xs">{{ exp.date.strftime('%Y-%m-%d') if exp.date.strftime is defined else exp.date }}</td>
+                                <tr class="table-row-hover group transition-all {% if loop.index > 5 %}hidden-expense-row hidden{% endif %}">
+                                    <td class="px-6 py-4 font-mono text-xs font-bold text-violet-300 tracking-wide">
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm text-violet-400">calendar_today</span>
+                                            <span>{{ exp.date.strftime('%Y-%m-%d') if exp.date.strftime is defined else exp.date }}</span>
+                                        </div>
+                                    </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-2">
                                             <span class="w-2.5 h-2.5 rounded-full bg-violet-400"></span>
@@ -318,10 +323,44 @@
                         </tbody>
                     </table>
                 </div>
+
+                {% if expenses and expenses|length > 5 %}
+                <div class="p-4 bg-[#181926]/90 border-t border-[#2a2b3d] flex justify-center" id="show-more-container">
+                    <button onclick="toggleShowMoreExpenses()" id="show-more-btn" class="bg-violet-500/15 hover:bg-violet-600 text-violet-300 hover:text-white border border-violet-500/30 px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg transition-all flex items-center gap-2 active:scale-95">
+                        <span class="material-symbols-outlined text-sm" id="show-more-icon">expand_more</span>
+                        <span id="show-more-text">Show More ({{ expenses|length - 5 }} More Expenses)</span>
+                    </button>
+                </div>
+                {% endif %}
             </div>
         </div>
     </main>
     <script>
+        let showingAllExpenses = false;
+        function toggleShowMoreExpenses() {
+            showingAllExpenses = !showingAllExpenses;
+            const hiddenRows = document.querySelectorAll('.hidden-expense-row');
+            const btnText = document.getElementById('show-more-text');
+            const btnIcon = document.getElementById('show-more-icon');
+            
+            hiddenRows.forEach(row => {
+                if (showingAllExpenses) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+            
+            if (showingAllExpenses) {
+                if (btnText) btnText.textContent = 'Show Less';
+                if (btnIcon) btnIcon.textContent = 'expand_less';
+            } else {
+                const remainingCount = hiddenRows.length;
+                if (btnText) btnText.textContent = `Show More (${remainingCount} More Expenses)`;
+                if (btnIcon) btnIcon.textContent = 'expand_more';
+            }
+        }
+
         function toggleCustomDates(val) {
             const container = document.getElementById('custom-date-container');
             if (container) {
