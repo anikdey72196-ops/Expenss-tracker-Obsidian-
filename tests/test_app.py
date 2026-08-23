@@ -1,7 +1,8 @@
 import os
 os.environ['PYTEST_CURRENT_TEST'] = 'true'
 import pytest
-from app import app as flask_app
+from app import app as flask_app, login_attempts as app_login_attempts
+from auth import login_attempts as auth_login_attempts
 from imports import db, User, Expense
 
 @pytest.fixture
@@ -17,6 +18,9 @@ def client():
     # Setup database
     with flask_app.app_context():
         db.create_all()
+
+    app_login_attempts.clear()
+    auth_login_attempts.clear()
 
     with flask_app.test_client() as client:
         yield client

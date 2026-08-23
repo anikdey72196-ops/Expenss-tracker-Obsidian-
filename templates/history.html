@@ -298,9 +298,12 @@
                                             <a href="{{ url_for('edit_expense', id=exp.id) }}" class="text-slate-400 hover:text-violet-400 transition-colors p-1" title="Edit">
                                                 <span class="material-symbols-outlined text-lg">edit</span>
                                             </a>
-                                            <a href="{{ url_for('delete_expense', id=exp.id) }}" class="text-slate-400 hover:text-red-400 transition-colors p-1" title="Delete" onclick="return confirm('Are you sure you want to delete this expense?')">
-                                                <span class="material-symbols-outlined text-lg">delete</span>
-                                            </a>
+                                            <form method="POST" action="{{ url_for('delete_expense', id=exp.id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this expense?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <button type="submit" class="text-slate-400 hover:text-red-400 transition-colors p-1" title="Delete">
+                                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
