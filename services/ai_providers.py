@@ -9,15 +9,16 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '').strip()
 
-# llama-3.1-8b-instant was deprecated by Groq — use llama3-8b-8192 as the
-# fast default. We keep a fallback list so if one model is retired the code
-# automatically retries with the next available one.
-GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama3-8b-8192')
+# llama3-8b-8192 and llama-3.1-8b-instant have been decommissioned by Groq.
+# Using compound-beta-mini (groq/compound-mini) as the new default.
+# Fallback list is tried in order if the primary model is unavailable.
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'compound-beta-mini')
 GROQ_FALLBACK_MODELS = [
-    'llama3-8b-8192',
-    'llama3-70b-8192',
-    'mixtral-8x7b-32768',
-    'gemma2-9b-it',
+    'compound-beta-mini',   # Fast, cost-efficient compound model (primary)
+    'compound-beta',        # Full compound model (slower but smarter)
+    'llama-3.1-70b-versatile',  # Reliable general-purpose fallback
+    'llama-3.1-8b-instant',     # Legacy fast model (may be decommissioned)
+    'gemma2-9b-it',             # Google Gemma 2 fallback
 ]
 
 # ---------------------------------------------------------------------------
