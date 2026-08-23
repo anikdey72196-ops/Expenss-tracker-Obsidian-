@@ -7,6 +7,7 @@ from imports import (
 
 from extensions import db, jwt
 import time
+import hmac
 
 login_attempts = {}
 
@@ -608,7 +609,12 @@ def admin_panel():
     key = request.args.get('key')
     current_user = session.get('user')
     
-    if not session.get('user_id') or not admin_user or not (current_user == admin_user or (admin_key and key == admin_key)):
+    key_match = False
+    if admin_key and key:
+        # Use constant-time comparison to prevent timing attacks on the admin key
+        key_match = hmac.compare_digest(key.encode('utf-8'), admin_key.encode('utf-8'))
+
+    if not session.get('user_id') or not admin_user or not (current_user == admin_user or key_match):
         flash("Access Denied: Administrator permissions required.", "danger")
         return redirect(url_for('home'))
         
