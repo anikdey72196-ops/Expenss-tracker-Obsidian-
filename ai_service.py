@@ -9,8 +9,10 @@ from flask import Response, stream_with_context
 
 ai_bp = Blueprint('ai', __name__, url_prefix='/ai')
 
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '').strip()
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
+
 OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
-# Use qwen2.5-coder:7b as default for fast response times; fallback to gemma4:12b if configured
 OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen2.5-coder:7b')
 
 _rate_limit_cache = {}
@@ -112,7 +114,7 @@ def _get_expense_summary(user_id):
     }
 
 
-def _get_active_model():
+def _get_active_ollama_model():
     """Determine active Ollama model, falling back to installed models if needed."""
     model = os.environ.get('OLLAMA_MODEL', 'qwen2.5-coder:7b')
     try:
@@ -131,10 +133,39 @@ def _get_active_model():
     return model
 
 
+def _call_groq(messages, stream=False, max_tokens=256, timeout=30):
+    
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": messages,
+        "stream": stream,
+        "temperature": 0.5,
+        "max_tokens": max_tokens
+    }
+
+    if stream:
+        resp = requests.post(url, headers=headers, json=payload, stream=True, timeout=timeout)
+        resp.raise_for_status()
+        return resp
+    else:
+        resp = requests.post(url, headers=headers, json=payload, timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        choices = data.get('choices', [])
+        if choices:
+            return choices[0].get('message', {}).get('content', '')
+        return ''
+
+
 def _call_ollama(messages, stream=False, num_predict=256, timeout=300):
     """Call the Ollama chat API with auto-resolved model and timeout handling."""
     url = f"{OLLAMA_BASE_URL}/api/chat"
-    model_name = _get_active_model()
+    model_name = _get_active_ollama_model()
     payload = {
         "model": model_name,
         "messages": messages,
@@ -156,6 +187,17 @@ def _call_ollama(messages, stream=False, num_predict=256, timeout=300):
         return data.get('message', {}).get('content', '')
 
 
+def _call_llm_single(messages, max_tokens=256, timeout=30):
+    """Call active LLM (Groq first, fallback to Ollama)."""
+    current_groq_key = os.environ.get('GROQ_API_KEY', GROQ_API_KEY).strip()
+    if current_groq_key:
+        try:
+            return _call_groq(messages, stream=False, max_tokens=max_tokens, timeout=timeout)
+        except Exception as e:
+            print(f"Groq API Error, trying Ollama fallback: {e}")
+    return _call_ollama(messages, stream=False, num_predict=max_tokens, timeout=timeout)
+
+
 def _build_system_prompt(summary_text):
     """Build concise system prompt for financial advice."""
     return f"""You are Obsidian AI, a smart personal financial advisor.
@@ -171,7 +213,7 @@ Your instructions:
 
 @ai_bp.route('/chat', methods=['POST'])
 def chat():
-    """Handle AI chat messages with streaming response and timeout protection."""
+    """Handle AI chat messages with streaming response (Groq Cloud API + Ollama fallback)."""
     if 'user_id' not in session:
         return jsonify({"error": "Please login first"}), 401
 
@@ -196,27 +238,47 @@ def chat():
             {"role": "user", "content": user_message}
         ]
 
+        current_groq_key = os.environ.get('GROQ_API_KEY', GROQ_API_KEY).strip()
+
         def generate():
             try:
-                resp = _call_ollama(messages, stream=True, num_predict=256, timeout=300)
-                for line in resp.iter_lines():
-                    if line:
-                        chunk = json.loads(line)
-                        msg = chunk.get('message', {})
-                        content = msg.get('content', '')
-                        
-                        # Send content if available
-                        if content:
-                            yield f"data: {json.dumps({'content': content})}\n\n"
-                            
-                        if chunk.get('done', False):
-                            yield f"data: {json.dumps({'done': True})}\n\n"
-                            break
+                if current_groq_key:
+                    # Groq Cloud API Streaming
+                    resp = _call_groq(messages, stream=True, max_tokens=300, timeout=30)
+                    for line in resp.iter_lines():
+                        if line:
+                            decoded = line.decode('utf-8')
+                            if decoded.startswith('data: '):
+                                raw_data = decoded[6:].strip()
+                                if raw_data == '[DONE]':
+                                    yield f"data: {json.dumps({'done': True})}\n\n"
+                                    break
+                                try:
+                                    chunk = json.loads(raw_data)
+                                    delta = chunk.get('choices', [{}])[0].get('delta', {})
+                                    content = delta.get('content', '')
+                                    if content:
+                                        yield f"data: {json.dumps({'content': content})}\n\n"
+                                except Exception:
+                                    pass
+                else:
+                    # Local Ollama Streaming Fallback
+                    resp = _call_ollama(messages, stream=True, num_predict=256, timeout=300)
+                    for line in resp.iter_lines():
+                        if line:
+                            chunk = json.loads(line)
+                            msg = chunk.get('message', {})
+                            content = msg.get('content', '')
+                            if content:
+                                yield f"data: {json.dumps({'content': content})}\n\n"
+                            if chunk.get('done', False):
+                                yield f"data: {json.dumps({'done': True})}\n\n"
+                                break
 
             except requests.exceptions.Timeout:
-                yield f"data: {json.dumps({'error': 'The AI model took too long to respond (timeout). It might be loading into memory — please try sending your message again!'})}\n\n"
+                yield f"data: {json.dumps({'error': 'The AI model took too long to respond (timeout). Please try sending your message again!'})}\n\n"
             except requests.exceptions.ConnectionError:
-                yield f"data: {json.dumps({'error': 'Cannot connect to Ollama. Please ensure Ollama is running (`ollama serve`).'})}\n\n"
+                yield f"data: {json.dumps({'error': 'Cannot connect to AI service. Please check your GROQ_API_KEY or local Ollama status.'})}\n\n"
             except Exception as e:
                 yield f"data: {json.dumps({'error': f'AI generation error: {str(e)}'})}\n\n"
 
@@ -229,15 +291,13 @@ def chat():
             }
         )
 
-    except requests.exceptions.ConnectionError:
-        return jsonify({"error": "Cannot connect to Ollama. Make sure it is running."}), 503
     except Exception as e:
         return jsonify({"error": f"Service error: {str(e)}"}), 500
 
 
 @ai_bp.route('/insights', methods=['GET'])
 def insights():
-    """Generate AI-powered spending insights with fast fallback."""
+    """Generate AI-powered spending insights (Groq Cloud AI + fast fallback)."""
     if 'user_id' not in session:
         return jsonify({"error": "Please login first"}), 401
 
@@ -294,14 +354,14 @@ def insights():
         else:
             trend = 'stable'
 
-        # Try LLM for fast tips with short predict limit and 30s timeout
+        # Try LLM for fast tips
         tips = None
         try:
             tip_messages = [
                 {"role": "system", "content": f"Based on spending: {summary_text}\nOutput ONLY a JSON array of 3 short financial tips."},
                 {"role": "user", "content": "Give me 3 short saving tips as a JSON array of 3 strings."}
             ]
-            tip_response = _call_ollama(tip_messages, stream=False, num_predict=120, timeout=30)
+            tip_response = _call_llm_single(tip_messages, max_tokens=150, timeout=15)
             tip_response = tip_response.strip()
             if tip_response.startswith('```'):
                 tip_response = tip_response.split('\n', 1)[1] if '\n' in tip_response else tip_response
@@ -336,7 +396,6 @@ def insights():
         return jsonify(result)
 
     except Exception as e:
-        # Fallback if anything fails
         return jsonify({
             'predicted_total': 0,
             'budget_status': 'neutral',
@@ -373,7 +432,15 @@ def _generate_fallback_tips(stats):
 
 @ai_bp.route('/health', methods=['GET'])
 def health():
-    """Check if Ollama is reachable."""
+    """Check if AI provider (Groq or Ollama) is reachable."""
+    current_groq_key = os.environ.get('GROQ_API_KEY', GROQ_API_KEY).strip()
+    if current_groq_key:
+        return jsonify({
+            "status": "connected",
+            "provider": "Groq Cloud AI",
+            "model": GROQ_MODEL
+        })
+
     try:
         resp = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=5)
         resp.raise_for_status()
@@ -381,11 +448,13 @@ def health():
         model_names = [m.get('name', '') for m in models]
         return jsonify({
             "status": "connected",
+            "provider": "Local Ollama",
             "models": model_names,
             "active_model": OLLAMA_MODEL
         })
     except Exception:
         return jsonify({
             "status": "disconnected",
-            "error": "Cannot reach Ollama server"
+            "provider": "None",
+            "error": "No GROQ_API_KEY set and local Ollama is un-reachable"
         }), 503
