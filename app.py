@@ -617,18 +617,33 @@ def admin_panel():
         return redirect(url_for('home'))
         
     users = User.query.all()
-    all_expenses = Expense.query.order_by(Expense.id.desc()).all()
-    expenses_data = []
-    for exp in all_expenses:
-        expenses_data.append({
-            'id': exp.id,
-            'username': exp.user.username if exp.user else 'Unknown',
-            'category': exp.category,
-            'amount': exp.amount,
-            'date': exp.date.strftime('%Y-%m-%d') if exp.date else '--',
-            'description': exp.description
+    user_data = []
+    total_system_expenses = 0
+    
+    for u in users:
+        user_expenses = Expense.query.filter_by(user_id=u.id).order_by(Expense.date.desc()).all()
+        exp_list = []
+        user_total = 0.0
+        for exp in user_expenses:
+            user_total += exp.amount
+            exp_list.append({
+                'id': exp.id,
+                'category': exp.category,
+                'amount': exp.amount,
+                'date': exp.date.strftime('%Y-%m-%d') if exp.date else '--',
+                'description': exp.description or 'No description'
+            })
+            
+        total_system_expenses += len(exp_list)
+        user_data.append({
+            'id': u.id,
+            'username': u.username,
+            'total_spent': round(user_total, 2),
+            'expense_count': len(exp_list),
+            'expenses': exp_list
         })
-    return render_template('admin.html', users=users, expenses=expenses_data, total_users=len(users), total_expenses=len(all_expenses))
+        
+    return render_template('admin.html', user_data=user_data, total_users=len(users), total_expenses=total_system_expenses)
 
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')

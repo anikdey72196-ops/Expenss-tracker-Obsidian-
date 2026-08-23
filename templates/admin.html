@@ -62,6 +62,20 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
         }
+
+        .user-accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .user-accordion-card.open .user-accordion-content {
+            max-height: 2000px;
+        }
+
+        .user-accordion-card.open .chevron-icon {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body class="font-sans antialiased">
@@ -89,7 +103,7 @@
                 </a>
                 <a href="{{ url_for('admin_panel') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 font-semibold transition-all">
                     <span class="material-symbols-outlined text-violet-400">supervisor_account</span>
-                    <span>All Users & Data</span>
+                    <span>User Expense Breakdown</span>
                 </a>
             </nav>
         </div>
@@ -108,8 +122,8 @@
         <!-- Top Header -->
         <header class="h-20 border-b border-[#2a2b3d] bg-[#0d0e17]/90 backdrop-blur-md sticky top-0 z-40 px-8 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-violet-400 text-2xl">database</span>
-                <h1 class="text-xl font-bold text-white tracking-tight">Database Overview (Render & Local)</h1>
+                <span class="material-symbols-outlined text-violet-400 text-2xl">supervisor_account</span>
+                <h1 class="text-xl font-bold text-white tracking-tight">Admin Portal - User Expense Management</h1>
             </div>
 
             <div class="flex items-center gap-3">
@@ -123,7 +137,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="glass-card p-6 flex items-center justify-between">
                     <div>
-                        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Total Registered Users</p>
+                        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Total Registered Accounts</p>
                         <h3 class="text-3xl font-extrabold text-violet-400">{{ total_users }}</h3>
                     </div>
                     <div class="w-12 h-12 bg-violet-500/15 rounded-2xl border border-violet-500/30 flex items-center justify-center text-violet-400">
@@ -133,7 +147,7 @@
 
                 <div class="glass-card p-6 flex items-center justify-between">
                     <div>
-                        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Total Logged Expenses</p>
+                        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Total System Expenses</p>
                         <h3 class="text-3xl font-extrabold text-orange-400">{{ total_expenses }}</h3>
                     </div>
                     <div class="w-12 h-12 bg-orange-500/15 rounded-2xl border border-orange-500/30 flex items-center justify-center text-orange-400">
@@ -142,95 +156,128 @@
                 </div>
             </div>
 
-            <!-- Registered Users Table -->
-            <div class="glass-card overflow-hidden">
-                <div class="p-6 border-b border-[#2a2b3d] flex justify-between items-center bg-[#10111a]">
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-violet-400">person</span>
-                        Registered User Accounts
-                    </h2>
-                    <span class="text-xs text-slate-400 font-mono">{{ total_users }} user(s)</span>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-[#181926] text-slate-400 text-xs uppercase tracking-wider border-b border-[#2a2b3d]">
-                            <tr>
-                                <th class="px-6 py-4 font-semibold">User ID</th>
-                                <th class="px-6 py-4 font-semibold">Username</th>
-                                <th class="px-6 py-4 font-semibold">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm text-slate-300 divide-y divide-[#2a2b3d]">
-                            {% if users %}
-                                {% for u in users %}
-                                <tr class="table-row-hover transition-all">
-                                    <td class="px-6 py-4 text-slate-400 font-mono text-xs">#{{ u.id }}</td>
-                                    <td class="px-6 py-4 font-bold text-white">{{ u.username }}</td>
-                                    <td class="px-6 py-4">
-                                        <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-500/20">Active</span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="3" class="px-6 py-8 text-center text-slate-500">No users registered yet.</td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
+            <!-- Search Filter Bar -->
+            <div class="flex items-center justify-between gap-4">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-violet-400">badge</span>
+                    Registered User Sections (Click user to expand expenses)
+                </h2>
+                <div class="relative w-72">
+                    <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+                    <input type="text" id="user-search-input" onkeyup="filterUsers()" placeholder="Search username..." class="w-full bg-[#14151f] border border-[#2a2b3d] rounded-xl py-2 pl-9 pr-4 text-xs text-white focus:border-violet-500 outline-none transition-colors">
                 </div>
             </div>
 
-            <!-- All User Expenses Table -->
-            <div class="glass-card overflow-hidden">
-                <div class="p-6 border-b border-[#2a2b3d] flex justify-between items-center bg-[#10111a]">
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-orange-400">receipt_long</span>
-                        All Expenses Logged by All Users
-                    </h2>
-                    <span class="text-xs text-slate-400 font-mono">{{ total_expenses }} record(s)</span>
-                </div>
+            <!-- User Sections Container -->
+            <div class="space-y-4" id="users-accordion-container">
+                {% if user_data %}
+                    {% for u in user_data %}
+                    <div class="user-accordion-card glass-card overflow-hidden transition-all border border-[#2a2b3d] hover:border-violet-500/30" id="user-card-{{ u.id }}">
+                        
+                        <!-- User Header Bar (Clickable) -->
+                        <div onclick="toggleUserCard('{{ u.id }}')" class="p-6 bg-[#10111a] flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/40 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30 text-violet-300 flex items-center justify-center font-bold text-lg shadow-inner">
+                                    {{ u.username[0]|upper }}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-base font-bold text-white user-name-label">{{ u.username }}</h3>
+                                        <span class="text-[10px] text-slate-400 font-mono bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700">ID #{{ u.id }}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-0.5">
+                                        Total Logged Expenses: <span class="text-white font-semibold">{{ u.expense_count }} item(s)</span>
+                                    </p>
+                                </div>
+                            </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-[#181926] text-slate-400 text-xs uppercase tracking-wider border-b border-[#2a2b3d]">
-                            <tr>
-                                <th class="px-6 py-4 font-semibold">User</th>
-                                <th class="px-6 py-4 font-semibold">Date</th>
-                                <th class="px-6 py-4 font-semibold">Category</th>
-                                <th class="px-6 py-4 font-semibold">Description</th>
-                                <th class="px-6 py-4 font-semibold">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm text-slate-300 divide-y divide-[#2a2b3d]">
-                            {% if expenses %}
-                                {% for exp in expenses %}
-                                <tr class="table-row-hover transition-all">
-                                    <td class="px-6 py-4 font-bold text-violet-300">
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-7 h-7 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center text-xs border border-violet-500/30">
-                                                {{ exp.username[0]|upper }}
-                                            </span>
-                                            <span>{{ exp.username }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 text-slate-400 font-mono text-xs">{{ exp.date }}</td>
-                                    <td class="px-6 py-4 text-slate-200">{{ exp.category }}</td>
-                                    <td class="px-6 py-4 font-medium text-white">{{ exp.description }}</td>
-                                    <td class="px-6 py-4 font-mono font-bold text-white">₹{{ exp.amount }}</td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-slate-500">No expenses recorded yet.</td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
+                            <div class="flex items-center gap-6">
+                                <div class="text-right">
+                                    <p class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Total Spent</p>
+                                    <p class="text-lg font-mono font-extrabold text-emerald-400">₹{{ "{:,.2f}".format(u.total_spent) }}</p>
+                                </div>
+                                <div class="w-9 h-9 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined chevron-icon transition-transform duration-300">expand_more</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Expenses Table (Expandable Content) -->
+                        <div class="user-accordion-content border-t border-[#2a2b3d] bg-[#0d0e17]">
+                            <div class="p-6">
+                                {% if u.expenses %}
+                                    <div class="overflow-x-auto rounded-xl border border-[#2a2b3d]">
+                                        <table class="w-full text-left border-collapse">
+                                            <thead class="bg-[#181926] text-slate-400 text-xs uppercase tracking-wider border-b border-[#2a2b3d]">
+                                                <tr>
+                                                    <th class="px-5 py-3.5 font-semibold">Expense ID</th>
+                                                    <th class="px-5 py-3.5 font-semibold">Date</th>
+                                                    <th class="px-5 py-3.5 font-semibold">Category</th>
+                                                    <th class="px-5 py-3.5 font-semibold">Description</th>
+                                                    <th class="px-5 py-3.5 font-semibold text-right">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="text-xs text-slate-300 divide-y divide-[#2a2b3d]">
+                                                {% for exp in u.expenses %}
+                                                <tr class="table-row-hover transition-all">
+                                                    <td class="px-5 py-3.5 text-slate-400 font-mono">#{{ exp.id }}</td>
+                                                    <td class="px-5 py-3.5 text-slate-400 font-mono">{{ exp.date }}</td>
+                                                    <td class="px-5 py-3.5">
+                                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-violet-500/10 text-violet-300 border border-violet-500/20">
+                                                            {{ exp.category }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-5 py-3.5 font-medium text-white">{{ exp.description }}</td>
+                                                    <td class="px-5 py-3.5 font-mono font-bold text-emerald-400 text-right">₹{{ "{:,.2f}".format(exp.amount) }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <div class="py-8 text-center text-slate-500 flex flex-col items-center justify-center gap-2">
+                                        <span class="material-symbols-outlined text-3xl text-slate-600">receipt_long</span>
+                                        <p class="text-sm font-medium">No expenses logged by {{ u.username }} yet.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="glass-card p-12 text-center text-slate-500 space-y-2">
+                        <span class="material-symbols-outlined text-4xl text-slate-600">person_off</span>
+                        <p class="text-base font-bold text-white">No Registered Users Found</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </main>
+
+    <script>
+        function toggleUserCard(userId) {
+            const card = document.getElementById('user-card-' + userId);
+            if (card) {
+                card.classList.toggle('open');
+            }
+        }
+
+        function filterUsers() {
+            const query = document.getElementById('user-search-input').value.toLowerCase();
+            const cards = document.querySelectorAll('.user-accordion-card');
+            
+            cards.forEach(card => {
+                const usernameEl = card.querySelector('.user-name-label');
+                if (usernameEl) {
+                    const username = usernameEl.textContent.toLowerCase();
+                    if (username.includes(query)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
