@@ -1,17 +1,25 @@
 import time
+import logging
 from imports import (
     Blueprint, render_template, redirect, session, request, url_for, flash,
     generate_password_hash, check_password_hash, db, User, RegistrationForm, LoginForm
 )
 
+logger = logging.getLogger(__name__)
 auth_web_bp = Blueprint('auth_web', __name__)
 login_attempts = {}
 
+# Rate limit: max 5 failed logins per IP within 300 seconds (5 minutes)
+_RATE_LIMIT_MAX = 5
+_RATE_LIMIT_WINDOW = 300
+
 
 def get_client_ip():
-    if request.headers.getlist("X-Forwarded-For"):
-        return request.headers.getlist("X-Forwarded-For")[0].split(',')[0].strip()
-    return request.remote_addr
+    xff = request.headers.get("X-Forwarded-For", "")
+    if xff:
+        # Only trust the first IP in the chain
+        return xff.split(',')[0].strip()
+    return request.remote_addr or "unknown"
 
 
 @auth_web_bp.route('/register', methods=['GET', 'POST'])
@@ -31,9 +39,10 @@ def register():
             db.session.commit()
             flash("Account created successfully! Please log in.", "success")
             return redirect(url_for('auth_web.login'))
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            flash(f"Error creating user account: {e}", "danger")
+            logger.exception("DB error creating user '%s'", form.username.data)
+            flash("Could not create your account. Please try again later.", "danger")
             return redirect(url_for('auth_web.register'))
 
     return render_template("register.html", form=form)
@@ -44,8 +53,8 @@ def login():
     ip = get_client_ip()
     attempts, last_time = login_attempts.get(ip, (0, 0))
 
-    if attempts >= 5 and time.time() - last_time < 300:
-        flash("Too many failed attempts. Please try again in 5 minutes.", "danger")
+    if attempts >= _RATE_LIMIT_MAX and time.time() - last_time < _RATE_LIMIT_WINDOW:
+        flash("Too many failed login attempts. Please try again in 5 minutes.", "danger")
         return redirect(url_for('auth_web.login'))
 
     form = LoginForm()
@@ -56,10 +65,11 @@ def login():
             session['user_id'] = user.id
             session['user'] = user.username
             session.permanent = True
-            login_attempts[ip] = (0, 0)
+            login_attempts.pop(ip, None)  # clear on successful login
             flash("Logged in successfully!", "success")
             return redirect(url_for('expense_web.home'))
         else:
+            logger.warning("Failed login attempt from IP %s for username '%s'", ip, form.username.data)
             login_attempts[ip] = (attempts + 1, time.time())
             flash("Invalid username or password.", "danger")
             return redirect(url_for('auth_web.login'))
