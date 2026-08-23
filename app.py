@@ -7,6 +7,7 @@ from imports import (
 
 from extensions import db, jwt
 import time
+import hmac
 
 login_attempts = {}
 
@@ -601,14 +602,16 @@ def logout():
 
 @app.route('/admin')
 def admin_panel():
-
     admin_user = os.environ.get('ADMIN_USERNAME')
     admin_key = os.environ.get('ADMIN_SECRET_KEY')
     
     key = request.args.get('key')
     current_user = session.get('user')
     
-    if not session.get('user_id') or not admin_user or not (current_user == admin_user or (admin_key and key == admin_key)):
+    is_user_match = bool(current_user and admin_user and hmac.compare_digest(current_user, admin_user))
+    is_key_match = bool(key and admin_key and hmac.compare_digest(key, admin_key))
+    
+    if not session.get('user_id') or not (is_user_match or is_key_match):
         flash("Access Denied: Administrator permissions required.", "danger")
         return redirect(url_for('home'))
         
