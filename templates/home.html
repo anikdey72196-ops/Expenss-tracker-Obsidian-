@@ -446,6 +446,7 @@
         buildCategoryChart();
         window.addEventListener('load', () => {
             fetchInsights();
+            loadChatHistory();
         });
         function toggleChat() {
             const panel = document.getElementById('chat-panel');
@@ -470,6 +471,46 @@
             });
         }
 
+        const CHAT_STORAGE_KEY = 'obsidian_ai_chat_history_v2';
+
+        function saveChatMessage(role, text) {
+            if (!text || !text.trim()) return;
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+            } catch(e) {}
+            
+            history.push({ role: role, text: text.trim() });
+            if (history.length > 8) {
+                history = history.slice(-8);
+            }
+            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(history));
+        }
+
+        function loadChatHistory() {
+            const chatBox = document.getElementById('chat-messages');
+            if (!chatBox) return;
+            
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+            } catch(e) {}
+            
+            if (history.length === 0) return;
+            
+            history.forEach(item => {
+                const msgDiv = document.createElement('div');
+                if (item.role === 'user') {
+                    msgDiv.className = "bg-violet-600 text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] ml-auto text-right mb-3";
+                } else {
+                    msgDiv.className = "bg-[#1c1d2b] p-3.5 rounded-2xl rounded-tl-none text-slate-300 max-w-[85%] border border-white/5 mb-3";
+                }
+                msgDiv.innerText = item.text;
+                chatBox.appendChild(msgDiv);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
         function sendQuickMsg(msg) {
             if (isAiGenerating) return;
             const input = document.getElementById('ai-chat-input');
@@ -478,6 +519,7 @@
                 sendUserMessage();
             }
         }
+
         function sendUserMessage() {
             if (isAiGenerating) return;
             const input = document.getElementById('ai-chat-input');
@@ -488,20 +530,23 @@
 
             const chatBox = document.getElementById('chat-messages');
             const userMsg = document.createElement('div');
-            userMsg.className = "bg-violet-600 text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] ml-auto text-right";
+            userMsg.className = "bg-violet-600 text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] ml-auto text-right mb-3";
             userMsg.innerText = message;
             chatBox.appendChild(userMsg);
+            saveChatMessage('user', message);
 
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
             const aiMsg = document.createElement('div');
-            aiMsg.className = "bg-[#1c1d2b] p-3.5 rounded-2xl rounded-tl-none text-slate-300 max-w-[85%] border border-white/5";
+            aiMsg.className = "bg-[#1c1d2b] p-3.5 rounded-2xl rounded-tl-none text-slate-300 max-w-[85%] border border-white/5 mb-3";
             aiMsg.innerHTML = '<span class="animate-pulse">Thinking...</span>';
             chatBox.appendChild(aiMsg);
             chatBox.scrollTop = chatBox.scrollHeight;
 
             let fullText = '';
+            let hasSavedAiMsg = false;
+
             fetch('/ai/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -516,6 +561,10 @@
                 function read() {
                     reader.read().then(({ done, value }) => {
                         if (done) {
+                            if (!hasSavedAiMsg && fullText) {
+                                saveChatMessage('ai', fullText);
+                                hasSavedAiMsg = true;
+                            }
                             setChatState(false);
                             return;
                         }
@@ -531,6 +580,10 @@
                                         chatBox.scrollTop = chatBox.scrollHeight;
                                     }
                                     if (data.done) {
+                                        if (!hasSavedAiMsg && fullText) {
+                                            saveChatMessage('ai', fullText);
+                                            hasSavedAiMsg = true;
+                                        }
                                         setChatState(false);
                                     }
                                 } catch(e) {}
@@ -543,7 +596,9 @@
                 }
                 read();
             }).catch(err => {
-                aiMsg.innerText = "Analyzing your request... Based on recent trends, reducing dining expenses by 10% could save you ₹1,200 monthly.";
+                const fallbackText = "Analyzing your request... Based on recent trends, reducing dining expenses by 10% could save you ₹1,200 monthly.";
+                aiMsg.innerText = fallbackText;
+                saveChatMessage('ai', fallbackText);
                 setChatState(false);
             });
         }

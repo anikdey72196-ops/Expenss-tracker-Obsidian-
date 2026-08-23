@@ -10,7 +10,7 @@ from flask import Response, stream_with_context
 ai_bp = Blueprint('ai', __name__, url_prefix='/ai')
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '').strip()
-GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.1-8b-instant')
 
 OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
 OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'gemma4:26b')
@@ -162,7 +162,7 @@ def _call_groq(messages, stream=False, max_tokens=256, timeout=30):
         return ''
 
 
-def _call_ollama(messages, stream=False, num_predict=256, timeout=300):
+def _call_ollama(messages, stream=False, num_predict=256, timeout=5):
     """Call the Ollama chat API with auto-resolved model and timeout handling."""
     url = f"{OLLAMA_BASE_URL}/api/chat"
     model_name = _get_active_ollama_model()
